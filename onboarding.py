@@ -16,11 +16,12 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
 
-APP_DIR = os.path.dirname(os.path.abspath(__file__))
-CONFIG_PATH = os.path.join(APP_DIR, "config.py")
-CERT_PATH = os.path.join(APP_DIR, "certificado.crt")
-KEY_PATH = os.path.join(APP_DIR, "MiClavePrivada.key")
-CSR_PATH = os.path.join(APP_DIR, "certificado.csr")
+import rutas
+
+CONFIG_PATH = rutas.ruta_datos("config.py")
+CERT_PATH = rutas.ruta_datos("certificado.crt")
+KEY_PATH = rutas.ruta_datos("MiClavePrivada.key")
+CSR_PATH = rutas.ruta_datos("certificado.csr")
 
 _TEMPLATE_VACIO = '''"""Datos propios de cada usuario de la app.
 
@@ -53,8 +54,8 @@ def necesita_onboarding():
     ])
     cert_rel = getattr(config, "CERT_PATH", None)
     key_rel = getattr(config, "KEY_PATH", None)
-    cert_ok = bool(cert_rel) and os.path.exists(os.path.join(APP_DIR, cert_rel))
-    key_ok = bool(key_rel) and os.path.exists(os.path.join(APP_DIR, key_rel))
+    cert_ok = bool(cert_rel) and os.path.exists(rutas.ruta_datos(cert_rel))
+    key_ok = bool(key_rel) and os.path.exists(rutas.ruta_datos(key_rel))
     return not (campos_ok and cert_ok and key_ok)
 
 

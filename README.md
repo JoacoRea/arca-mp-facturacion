@@ -46,6 +46,19 @@ certificado), se abre un asistente de configuración que:
 
 También se puede armar `config.py` a mano copiando `config.example.py`.
 
+## Empaquetar como .exe
+
+Para no depender de tener Python instalado:
+
+```
+pip install pyinstaller
+pyinstaller --onefile --noconsole --name "BeautyBiller" --icon icon.ico --add-data "gui.html;." --add-data "icon.ico;." gui.py
+```
+
+Genera `dist/BeautyBiller.exe`, un solo archivo. Se le puede pasar esa
+carpeta (o solo el `.exe`, que arma `config.py` solo la primera vez) a
+cualquier otra persona sin que necesite instalar nada más.
+
 ## Estructura
 
 - `gui.py` / `gui.html` — interfaz de escritorio (pywebview).
@@ -57,6 +70,10 @@ También se puede armar `config.py` a mano copiando `config.example.py`.
 - `consultar_transferencias.py` — búsqueda de transferencias recibidas en
   Mercado Pago.
 - `historial.py` — registro local de qué transferencias ya se facturaron.
+- `rutas.py` — resolución de rutas de archivos, compatible tanto con correr
+  desde código fuente como empaquetado en un `.exe`.
+- `registro.py` — logging a archivo (`beauty_biller.log`) para poder
+  diagnosticar problemas sin acceso directo a la pantalla del usuario.
 - `main.py` — versión por consola del mismo flujo, útil para debug.
 
 ## Notas

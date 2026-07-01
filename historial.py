@@ -8,7 +8,9 @@ import datetime
 import json
 import os
 
-HISTORIAL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "historial_facturas.json")
+import rutas
+
+HISTORIAL_PATH = rutas.ruta_datos("historial_facturas.json")
 
 
 def cargar_historial():

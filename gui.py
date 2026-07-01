@@ -5,17 +5,22 @@ siempre la toma la persona frente a la pantalla, a propósito. La UI vive en
 gui.html; este archivo solo expone la lógica de Python al JS vía js_api.
 """
 import datetime
-import os
+import logging
 import webview
 
+import rutas
+import registro
 import onboarding  # tiene que importarse primero: garantiza que config.py exista
 
 import consultar_transferencias as mp
 import facturar
 import historial
 
-HTML_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "gui.html")
-ICON_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "icon.ico")
+registro.configurar()
+log = logging.getLogger("beauty_biller")
+
+HTML_PATH = rutas.ruta_recurso("gui.html")
+ICON_PATH = rutas.ruta_recurso("icon.ico")
 
 TIPOS_ARCHIVO = {
     "crt": ("Certificado (*.crt;*.pem)",),
@@ -45,8 +50,10 @@ class Api:
     def generar_certificado(self, cuit, alias):
         try:
             resultado = onboarding.generar_clave_y_csr(cuit, alias)
+            log.info("Clave y CSR generados (onboarding)")
             return {"ok": True, **resultado}
         except Exception as e:
+            log.exception("Error generando clave y CSR")
             return {"ok": False, "error": str(e)}
 
     def elegir_archivo(self, tipo):
@@ -62,8 +69,10 @@ class Api:
             else:
                 onboarding.instalar_clave(origen)
         except Exception as e:
+            log.exception("Error instalando archivo de tipo %s", tipo)
             return {"ok": False, "error": str(e)}
 
+        log.info("Archivo de tipo %s instalado (onboarding)", tipo)
         return {"ok": True}
 
     def guardar_config_inicial(self, datos):
@@ -73,8 +82,10 @@ class Api:
                 cuit=datos.get("cuit", ""),
                 pto_vta=datos.get("pto_vta", ""),
             )
+            log.info("config.py guardado (onboarding completado)")
             return {"ok": True}
         except Exception as e:
+            log.exception("Error guardando config.py")
             return {"ok": False, "error": str(e)}
 
     def cerrar_app(self):
@@ -90,15 +101,17 @@ class Api:
             pagos = mp.obtener_transferencias(dias=dias)
             candidatos = mp.filtrar_candidatos(pagos)
         except Exception as e:
+            log.exception("Error buscando transferencias en Mercado Pago (dias=%s)", dias)
             return {"ok": False, "error": str(e)}
 
         hist = historial.cargar_historial()
         for c in candidatos:
-            registro = hist.get(str(c["id"]))
-            c["ya_facturada"] = registro is not None
-            c["cae_previo"] = registro.get("cae") if registro else None
+            reg = hist.get(str(c["id"]))
+            c["ya_facturada"] = reg is not None
+            c["cae_previo"] = reg.get("cae") if reg else None
 
         self._candidatos = candidatos
+        log.info("Búsqueda de transferencias: dias=%s, encontradas=%s", dias, len(candidatos))
         return {"ok": True, "candidatos": candidatos}
 
     def facturar(self, ids):
@@ -115,9 +128,13 @@ class Api:
             try:
                 resultado = facturar.emitir_factura_c(importe=c["monto"])
             except Exception as e:
+                log.exception("Error emitiendo factura para transferencia %s", id_)
                 resultado = {"ok": False, "error": str(e)}
             if resultado.get("ok"):
                 historial.registrar_factura(c["id"], c, resultado)
+                log.info("Factura emitida: monto=%s cae=%s numero=%s", c["monto"], resultado.get("cae"), resultado.get("numero"))
+            else:
+                log.warning("Factura rechazada para transferencia %s: %s", id_, resultado.get("error"))
             resultado["id"] = id_
             resultados.append(resultado)
 
@@ -141,13 +158,16 @@ class Api:
         try:
             registros = facturar.consultar_facturas_arca(desde=desde)
         except Exception as e:
+            log.exception("Error consultando historial directo a ARCA")
             return {"ok": False, "error": str(e)}
 
         total = sum(r.get("monto") or 0 for r in registros)
+        log.info("Consulta de historial a ARCA: periodo=%s, encontradas=%s", periodo, len(registros))
         return {"ok": True, "registros": registros, "total": total}
 
 
 if __name__ == "__main__":
+    log.info("Beauty Biller iniciado")
     webview.create_window(
         "Beauty Biller",
         HTML_PATH,

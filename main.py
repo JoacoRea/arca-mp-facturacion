@@ -3,9 +3,12 @@
 Por ahora es por consola (la interfaz gráfica vive en gui.py/gui.html).
 La decisión de qué facturar siempre la toma la persona, a propósito.
 """
+import registro
 import consultar_transferencias as mp
 import facturar
 import historial
+
+registro.configurar()
 
 
 def marcar_ya_facturadas(candidatos):

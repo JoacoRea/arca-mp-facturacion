@@ -12,9 +12,17 @@ historial_facturas.json
 tra.xml
 tra.cms
 
+# Logs (pueden tener rutas locales, no son documentación pública)
+*.log
+
 # Notas internas del desarrollo (no son documentación pública)
 NOTAS.md
 
 # Python
 __pycache__/
 *.pyc
+
+# Empaquetado con PyInstaller
+build/
+dist/
+*.spec
