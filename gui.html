@@ -669,6 +669,20 @@
 <script>
 let candidatos = [];
 
+// Escapa datos dinámicos antes de interpolarlos en innerHTML. Los nombres de
+// pagadores vienen de Mercado Pago (texto externo): sin esto, un nombre con
+// HTML se interpretaría como markup dentro de la app.
+function esc(valor) {
+  return String(valor ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  })[c]);
+}
+
+// Evita colas de punto flotante tipo $1500.0000000001 en las sumas.
+function redondear(monto) {
+  return Math.round(Number(monto) * 100) / 100;
+}
+
 function esperarApi() {
   return new Promise((resolve) => {
     if (window.pywebview && window.pywebview.api) return resolve();
@@ -732,15 +746,15 @@ function render() {
     const disabled = c.ya_facturada ? "disabled" : "";
     let resultadoHtml = "";
     if (c.ya_facturada) {
-      resultadoHtml = `<span class="badge badge-ok">✓ Facturada — CAE ${c.cae_previo}</span>`;
+      resultadoHtml = `<span class="badge badge-ok">✓ Facturada — CAE ${esc(c.cae_previo)}</span>`;
     }
 
     div.innerHTML = `
-      <span class="chk"><input type="checkbox" data-id="${c.id}" ${disabled}></span>
-      <span class="col-fecha" data-label="Fecha">${c.fecha}</span>
-      <span class="col-monto" data-label="Monto">$${c.monto}</span>
-      <span class="col-de" data-label="De">${c.de}</span>
-      <span class="col-metodo" data-label="Método">${c.metodo}</span>
+      <span class="chk"><input type="checkbox" data-id="${esc(c.id)}" ${disabled}></span>
+      <span class="col-fecha" data-label="Fecha">${esc(c.fecha)}</span>
+      <span class="col-monto" data-label="Monto">$${esc(c.monto)}</span>
+      <span class="col-de" data-label="De">${esc(c.de)}</span>
+      <span class="col-metodo" data-label="Método">${esc(c.metodo)}</span>
       <span class="col-resultado" data-label="Resultado">${resultadoHtml}</span>
     `;
     cont.appendChild(div);
@@ -757,7 +771,7 @@ async function facturarSeleccionadas() {
   }
 
   const seleccionadas = checks.map((chk) => candidatos.find((c) => String(c.id) === chk.dataset.id));
-  const total = seleccionadas.reduce((acc, c) => acc + c.monto, 0);
+  const total = redondear(seleccionadas.reduce((acc, c) => acc + c.monto, 0));
 
   const confirmar = confirm(
     `Vas a emitir ${seleccionadas.length} Factura/s C en ARCA (PRODUCCIÓN, con CAE real) ` +
@@ -780,9 +794,9 @@ async function facturarSeleccionadas() {
     if (!chk) continue;
     const celda = chk.closest(".item").querySelector(".col-resultado");
     if (r.ok) {
-      celda.innerHTML = `<span class="badge badge-ok">✓ OK — CAE ${r.cae}</span>`;
+      celda.innerHTML = `<span class="badge badge-ok">✓ OK — CAE ${esc(r.cae)}</span>`;
     } else {
-      celda.innerHTML = `<span class="badge badge-error">✕ Rechazada: ${r.error}</span>`;
+      celda.innerHTML = `<span class="badge badge-error">✕ Rechazada: ${esc(r.error)}</span>`;
     }
   }
 
@@ -826,8 +840,8 @@ function actualizarResumen() {
   const ptoVta = document.getElementById("wPtoVta").value;
   const token = document.getElementById("wToken").value;
   document.getElementById("resumen").innerHTML = `
-    <div><span>CUIT</span><strong>${cuit}</strong></div>
-    <div><span>Punto de Venta</span><strong>${ptoVta}</strong></div>
+    <div><span>CUIT</span><strong>${esc(cuit)}</strong></div>
+    <div><span>Punto de Venta</span><strong>${esc(ptoVta)}</strong></div>
     <div><span>Certificado</span><strong>✓ instalado</strong></div>
     <div><span>Mercado Pago</span><strong>${token ? "✓ token cargado" : "falta"}</strong></div>
   `;
@@ -954,6 +968,11 @@ async function cargarHistorial() {
   resumen.innerHTML = '<span class="spinner"></span> Cargando...';
 
   const resp = await window.pywebview.api.listar_historial(periodo);
+  if (resp.error) {
+    resumen.textContent = "";
+    alert("Error leyendo el historial: " + resp.error);
+    return;
+  }
   renderHistorial(resp.registros, resp.total);
 }
 
@@ -990,7 +1009,7 @@ function renderHistorial(registros, total, opciones = {}) {
   }
 
   const fuente = origen === "arca" ? " · 📡 en vivo desde ARCA" : "";
-  resumen.textContent = `${registros.length} factura${registros.length === 1 ? "" : "s"} — $${total}${fuente}`;
+  resumen.textContent = `${registros.length} factura${registros.length === 1 ? "" : "s"} — $${redondear(total)}${fuente}`;
 
   registros.forEach((r, i) => {
     const div = document.createElement("div");
@@ -998,11 +1017,11 @@ function renderHistorial(registros, total, opciones = {}) {
     div.style.setProperty("--i", i);
     const de = r.de || (origen === "arca" ? "Consumidor Final" : "—");
     div.innerHTML = `
-      <span data-label="Fecha">${formatearFecha(r.fecha_emision || r.fecha_transferencia)}</span>
-      <span data-label="Monto" class="col-monto">$${r.monto}</span>
-      <span data-label="De" class="col-de">${de}</span>
-      <span data-label="CAE">${r.cae}</span>
-      <span data-label="Comprobante">PtoVta ${r.pto_vta} — Nº ${r.numero}</span>
+      <span data-label="Fecha">${esc(formatearFecha(r.fecha_emision || r.fecha_transferencia))}</span>
+      <span data-label="Monto" class="col-monto">$${esc(r.monto)}</span>
+      <span data-label="De" class="col-de">${esc(de)}</span>
+      <span data-label="CAE">${esc(r.cae)}</span>
+      <span data-label="Comprobante">PtoVta ${esc(r.pto_vta)} — Nº ${esc(r.numero)}</span>
     `;
     cont.appendChild(div);
   });

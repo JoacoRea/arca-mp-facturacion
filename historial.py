@@ -14,10 +14,20 @@ HISTORIAL_PATH = rutas.ruta_datos("historial_facturas.json")
 
 
 def cargar_historial():
+    """Devuelve el historial como dict. Si el archivo está dañado, corta con un
+    error claro en vez de devolver un historial vacío: un historial vacío haría
+    que transferencias ya facturadas vuelvan a aparecer como pendientes."""
     if not os.path.exists(HISTORIAL_PATH):
         return {}
-    with open(HISTORIAL_PATH, encoding="utf-8") as f:
-        return json.load(f)
+    try:
+        with open(HISTORIAL_PATH, encoding="utf-8") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, UnicodeDecodeError) as e:
+        raise RuntimeError(
+            f"El archivo {os.path.basename(HISTORIAL_PATH)} está dañado y no se puede leer. "
+            "Restauralo desde un backup o renombralo para empezar de cero (ojo: sin historial, "
+            "las transferencias ya facturadas vuelven a aparecer como pendientes)."
+        ) from e
 
 
 def ya_facturada(mp_id):
@@ -38,8 +48,12 @@ def registrar_factura(mp_id, transferencia, resultado):
         "pto_vta": resultado.get("pto_vta"),
         "vencimiento_cae": resultado.get("vencimiento_cae"),
     }
-    with open(HISTORIAL_PATH, "w", encoding="utf-8") as f:
+    # Escritura atómica (temporal + rename): si la app se corta a mitad de la
+    # escritura, el historial anterior queda intacto en vez de corromperse.
+    tmp_path = HISTORIAL_PATH + ".tmp"
+    with open(tmp_path, "w", encoding="utf-8") as f:
         json.dump(historial, f, indent=2, ensure_ascii=False)
+    os.replace(tmp_path, HISTORIAL_PATH)
 
 
 def _parsear_fecha(raw):

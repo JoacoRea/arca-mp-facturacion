@@ -8,7 +8,7 @@ MiClavePrivada.key
 credenciales.json
 historial_facturas.json
 
-# Archivos temporales que genera login.py en cada corrida
+# Archivos temporales que generaban versiones viejas de login.py (hoy la firma es en memoria)
 tra.xml
 tra.cms
 

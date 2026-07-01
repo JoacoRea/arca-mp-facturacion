@@ -21,11 +21,28 @@ class SSLAdapter(HTTPAdapter):
         return super().init_poolmanager(*args, **kwargs)
 
 
-def _cliente_wsfe():
-    session = requests.Session()
-    session.mount("https://", SSLAdapter())
-    transport = Transport(session=session)
-    return Client(WSFE_WSDL, transport=transport)
+_client = None
+
+
+def cliente_wsfe():
+    """Cliente SOAP de WSFEv1, cacheado a nivel módulo: bajar y parsear el WSDL
+    es lento y no hace falta repetirlo por cada operación (p. ej. al facturar
+    varios turnos seguidos)."""
+    global _client
+    if _client is None:
+        session = requests.Session()
+        session.mount("https://", SSLAdapter())
+        transport = Transport(session=session, timeout=60, operation_timeout=90)
+        _client = Client(WSFE_WSDL, transport=transport)
+    return _client
+
+
+def _errores_arca(resultado):
+    """Errores a nivel respuesta de WSFE (token vencido, punto de venta inválido,
+    etc.). Cuando vienen, el resto de la respuesta suele estar vacío."""
+    if getattr(resultado, "Errors", None):
+        return [f"{err.Code}: {err.Msg}" for err in resultado.Errors.Err]
+    return []
 
 
 def emitir_factura_c(importe, fecha=None, concepto=2, doc_tipo=99, doc_nro=0):
@@ -42,12 +59,15 @@ def emitir_factura_c(importe, fecha=None, concepto=2, doc_tipo=99, doc_nro=0):
     creds = login.obtener_credenciales_validas()
     auth = {"Token": creds["token"], "Sign": creds["sign"], "Cuit": CUIT}
 
-    client = _cliente_wsfe()
+    client = cliente_wsfe()
 
     ultimo = client.service.FECompUltimoAutorizado(Auth=auth, PtoVta=PTO_VTA, CbteTipo=CBTE_TIPO)
+    errores = _errores_arca(ultimo)
+    if errores:
+        return {"ok": False, "error": errores}
     proximo_nro = ultimo.CbteNro + 1
 
-    fecha_cbte = (fecha or datetime.datetime.now()).strftime("%Y%m%d")
+    fecha_cbte = (fecha or datetime.datetime.now(login.ZONA_AR)).strftime("%Y%m%d")
 
     factura = {
         "FeCabReq": {"CantReg": 1, "PtoVta": PTO_VTA, "CbteTipo": CBTE_TIPO},
@@ -76,6 +96,9 @@ def emitir_factura_c(importe, fecha=None, concepto=2, doc_tipo=99, doc_nro=0):
     }
 
     resultado = client.service.FECAESolicitar(Auth=auth, FeCAEReq=factura)
+    errores = _errores_arca(resultado)
+    if errores:
+        return {"ok": False, "error": errores}
     detalle = resultado.FeDetResp.FECAEDetResponse[0]
 
     if detalle.Resultado == "A":
@@ -99,20 +122,24 @@ def consultar_facturas_arca(desde=None):
     """Reconstruye la lista de Facturas C emitidas consultando directamente a
     ARCA (WSFEv1), comprobante por comprobante — no hay un endpoint de ARCA
     que devuelva "todo el historial" de una sola vez. Solo se debe llamar a
-    pedido explícito del usuario: hace una consulta HTTP por cada comprobante
-    emitido, así que puede tardar si hay muchos.
+    pedido explícito del usuario: hace una consulta HTTP por cada comprobante,
+    así que puede tardar si hay muchos.
 
-    `desde`: date opcional; si se pasa, se descartan los comprobantes con
-    fecha de emisión anterior."""
+    `desde`: date opcional; si se pasa, se recorre del comprobante más nuevo al
+    más viejo y se corta al encontrar uno anterior (los números de comprobante
+    son cronológicos), así no se consulta historial que no se va a mostrar."""
     creds = login.obtener_credenciales_validas()
     auth = {"Token": creds["token"], "Sign": creds["sign"], "Cuit": CUIT}
-    client = _cliente_wsfe()
+    client = cliente_wsfe()
 
     ultimo = client.service.FECompUltimoAutorizado(Auth=auth, PtoVta=PTO_VTA, CbteTipo=CBTE_TIPO)
+    errores = _errores_arca(ultimo)
+    if errores:
+        raise RuntimeError("ARCA devolvió un error: " + "; ".join(errores))
     ultimo_nro = ultimo.CbteNro
 
     facturas = []
-    for nro in range(1, ultimo_nro + 1):
+    for nro in range(ultimo_nro, 0, -1):
         resultado = client.service.FECompConsultar(
             Auth=auth,
             FeCompConsReq={"CbteTipo": CBTE_TIPO, "CbteNro": nro, "PtoVta": PTO_VTA},
@@ -124,7 +151,7 @@ def consultar_facturas_arca(desde=None):
         if desde is not None and detalle.CbteFch:
             fecha_dt = datetime.datetime.strptime(detalle.CbteFch, "%Y%m%d").date()
             if fecha_dt < desde:
-                continue
+                break
 
         facturas.append({
             "numero": nro,
@@ -135,7 +162,6 @@ def consultar_facturas_arca(desde=None):
             "vencimiento_cae": detalle.FchVto,
         })
 
-    facturas.sort(key=lambda f: f["numero"], reverse=True)
     return facturas
 
 

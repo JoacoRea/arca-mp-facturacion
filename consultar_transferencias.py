@@ -4,6 +4,12 @@ from config import MP_ACCESS_TOKEN
 
 URL = "https://api.mercadopago.com/v1/payments/search"
 HEADERS = {"Authorization": f"Bearer {MP_ACCESS_TOKEN}"}
+TIMEOUT = 30  # segundos por request; sin esto una caída de red cuelga la búsqueda
+
+# Argentina no usa horario de verano: -03:00 todo el año. Usar este huso (y no
+# la hora local de la PC) mantiene el rango de fechas correcto aunque la
+# computadora esté configurada en otra zona horaria.
+ZONA_AR = datetime.timezone(datetime.timedelta(hours=-3))
 
 # Tipos de operación que consideramos "candidatos a transferencia recibida"
 TIPOS_RELEVANTES = ["account_fund", "money_transfer"]
@@ -11,7 +17,7 @@ TIPOS_RELEVANTES = ["account_fund", "money_transfer"]
 
 def obtener_transferencias(dias=30):
     """Trae transferencias recibidas candidatas en los últimos N días, paginando."""
-    hoy = datetime.datetime.now()
+    hoy = datetime.datetime.now(ZONA_AR)
     desde = hoy - datetime.timedelta(days=dias)
 
     begin_date = desde.strftime("%Y-%m-%dT00:00:00.000-03:00")
@@ -31,7 +37,13 @@ def obtener_transferencias(dias=30):
             "limit": limit,
             "offset": offset
         }
-        response = requests.get(URL, headers=HEADERS, params=params)
+        response = requests.get(URL, headers=HEADERS, params=params, timeout=TIMEOUT)
+        if response.status_code == 401:
+            raise RuntimeError(
+                "Mercado Pago rechazó el Access Token (401). Revisá que el token "
+                "de producción en config.py esté bien copiado y siga vigente."
+            )
+        response.raise_for_status()
         data = response.json()
         pagos = data.get("results", [])
 

@@ -96,15 +96,16 @@ class Api:
             dias = int(dias)
         except (TypeError, ValueError):
             return {"ok": False, "error": "Días inválido"}
+        dias = max(1, dias)
 
         try:
             pagos = mp.obtener_transferencias(dias=dias)
             candidatos = mp.filtrar_candidatos(pagos)
+            hist = historial.cargar_historial()
         except Exception as e:
             log.exception("Error buscando transferencias en Mercado Pago (dias=%s)", dias)
             return {"ok": False, "error": str(e)}
 
-        hist = historial.cargar_historial()
         for c in candidatos:
             reg = hist.get(str(c["id"]))
             c["ya_facturada"] = reg is not None
@@ -116,13 +117,21 @@ class Api:
 
     def facturar(self, ids):
         por_id = {str(c["id"]): c for c in self._candidatos}
-        resultados = []
 
+        # Se carga el historial una sola vez (ya_facturada() relee el JSON del
+        # disco en cada llamada) y, si está dañado, no se factura nada.
+        try:
+            hist = historial.cargar_historial()
+        except Exception as e:
+            log.exception("Error leyendo el historial antes de facturar")
+            return [{"id": id_, "ok": False, "error": str(e)} for id_ in ids]
+
+        resultados = []
         for id_ in ids:
             c = por_id.get(str(id_))
             if not c:
                 continue
-            if historial.ya_facturada(c["id"]):
+            if str(c["id"]) in hist:
                 resultados.append({"id": id_, "ok": False, "error": ["Ya estaba facturada"]})
                 continue
             try:
@@ -144,8 +153,13 @@ class Api:
         dias = DIAS_POR_PERIODO.get(periodo, DIAS_POR_PERIODO["mes"])
         desde = (datetime.date.today() - datetime.timedelta(days=dias)) if dias else None
 
-        registros = historial.listar_facturas(desde=desde)
-        total = sum(r.get("monto") or 0 for r in registros)
+        try:
+            registros = historial.listar_facturas(desde=desde)
+        except Exception as e:
+            log.exception("Error leyendo el historial local")
+            return {"registros": [], "total": 0, "error": str(e)}
+
+        total = round(sum(r.get("monto") or 0 for r in registros), 2)
         return {"registros": registros, "total": total}
 
     def consultar_historial_arca(self, periodo="mes"):
@@ -161,7 +175,7 @@ class Api:
             log.exception("Error consultando historial directo a ARCA")
             return {"ok": False, "error": str(e)}
 
-        total = sum(r.get("monto") or 0 for r in registros)
+        total = round(sum(r.get("monto") or 0 for r in registros), 2)
         log.info("Consulta de historial a ARCA: periodo=%s, encontradas=%s", periodo, len(registros))
         return {"ok": True, "registros": registros, "total": total}
 
