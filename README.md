@@ -1,4 +1,4 @@
-# Beauty Biller
+# App de Facturacion MP -> ARCA
 
 App de escritorio para facturar automáticamente en ARCA (ex AFIP) a partir de
 transferencias recibidas por Mercado Pago. Pensada para monotributistas que
