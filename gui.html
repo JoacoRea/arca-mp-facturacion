@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beauty Biller</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blush-50: #fff7f9;
+    --blush-100: #fdedf1;
+    --blush-200: #f9d9e3;
+    --rose-400: #e78aa8;
+    --rose-500: #d46a92;
+    --rose-600: #b8557c;
+    --gold-400: #d9b877;
+    --gold-500: #c9a15f;
+    --plum-900: #3a2430;
+    --plum-700: #5c3b49;
+    --plum-500: #8a6472;
+    --green-600: #2f8f5b;
+    --red-600: #c0392b;
+    --shadow-soft: 0 10px 30px rgba(180, 100, 130, 0.14);
+    --radius: 16px;
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+
+  html, body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: 'Poppins', 'Segoe UI', system-ui, sans-serif;
+    color: var(--plum-900);
+    background:
+      radial-gradient(circle at 12% 8%, rgba(217, 184, 119, 0.16), transparent 40%),
+      radial-gradient(circle at 90% 15%, rgba(231, 138, 168, 0.18), transparent 45%),
+      linear-gradient(160deg, var(--blush-50) 0%, var(--blush-100) 45%, #fbeaf0 100%);
+    background-attachment: fixed;
+  }
+
+  .app {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 28px 24px 60px;
+  }
+
+  /* ---------- Header ---------- */
+  .hero {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    animation: fadeInDown .5s ease both;
+  }
+
+  .hero-icon {
+    width: 56px;
+    height: 56px;
+    flex-shrink: 0;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    background: linear-gradient(135deg, var(--rose-400), var(--gold-400));
+    box-shadow: var(--shadow-soft);
+  }
+
+  .hero h1 {
+    margin: 0;
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    background: linear-gradient(100deg, var(--rose-600), var(--gold-500) 70%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .hero p {
+    margin: 2px 0 0;
+    font-size: 13px;
+    color: var(--plum-500);
+    letter-spacing: 0.3px;
+  }
+
+  /* ---------- Cards ---------- */
+  .card {
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .toolbar {
+    padding: 18px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 16px;
+    animation: fadeInUp .5s ease both;
+    animation-delay: .05s;
+  }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+
+  .field label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--plum-500);
+  }
+
+  .field input {
+    width: 108px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    border: 1.5px solid var(--blush-200);
+    background: #fff;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--plum-900);
+    outline: none;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+
+  .field input:focus {
+    border-color: var(--rose-400);
+    box-shadow: 0 0 0 3px rgba(231, 138, 168, 0.18);
+  }
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    border: none;
+    border-radius: 12px;
+    padding: 11px 22px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+  }
+
+  .btn:active { transform: translateY(1px); }
+  .btn:disabled { opacity: 0.5; cursor: default; transform: none; }
+
+  .btn-primary {
+    color: #fff;
+    background: linear-gradient(135deg, var(--rose-500), var(--rose-600));
+    box-shadow: 0 6px 18px rgba(212, 106, 146, 0.35);
+  }
+  .btn-primary:hover:not(:disabled) { box-shadow: 0 8px 22px rgba(212, 106, 146, 0.45); transform: translateY(-1px); }
+
+  .btn-accent {
+    color: var(--plum-900);
+    background: linear-gradient(135deg, var(--gold-400), var(--gold-500));
+    box-shadow: 0 6px 18px rgba(201, 161, 95, 0.4);
+  }
+  .btn-accent:hover:not(:disabled) { box-shadow: 0 8px 22px rgba(201, 161, 95, 0.5); transform: translateY(-1px); }
+
+  .status {
+    font-size: 13px;
+    color: var(--plum-500);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .spinner {
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    border: 2px solid var(--blush-200);
+    border-top-color: var(--rose-500);
+    animation: spin .7s linear infinite;
+  }
+
+  /* ---------- Lista ---------- */
+  .lista-wrap { overflow: hidden; margin-bottom: 20px; animation: fadeInUp .5s ease both; animation-delay: .1s; }
+
+  .lista-header, .item {
+    display: grid;
+    grid-template-columns: 40px 100px 90px 1fr 120px 190px;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 20px;
+  }
+
+  .lista-header {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--plum-500);
+    background: rgba(249, 217, 227, 0.35);
+    border-bottom: 1px solid rgba(180, 100, 130, 0.12);
+  }
+
+  .item {
+    border-bottom: 1px solid rgba(180, 100, 130, 0.08);
+    font-size: 13.5px;
+    animation: fadeInUp .35s ease both;
+    animation-delay: calc(var(--i, 0) * 45ms);
+    transition: background .15s ease, opacity .2s ease;
+  }
+  .item:last-child { border-bottom: none; }
+  .item:hover { background: rgba(249, 217, 227, 0.28); }
+  .item.ya-facturada { opacity: 0.6; }
+  .item.oculto { display: none; }
+
+  .item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--rose-500);
+    cursor: pointer;
+  }
+  .item input[type="checkbox"]:disabled { cursor: default; }
+
+  .col-monto { font-weight: 700; color: var(--rose-600); }
+  .col-de { color: var(--plum-700); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .col-metodo {
+    font-size: 11px;
+    color: var(--plum-500);
+    background: rgba(138, 100, 114, 0.08);
+    padding: 3px 8px;
+    border-radius: 20px;
+    width: fit-content;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .badge {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    width: fit-content;
+    white-space: nowrap;
+  }
+  .badge-ok { color: var(--green-600); background: rgba(47, 143, 91, 0.12); }
+  .badge-error { color: var(--red-600); background: rgba(192, 57, 43, 0.12); }
+  .badge-pending { color: var(--rose-600); background: rgba(212, 106, 146, 0.12); }
+
+  .empty-state, .init-state {
+    padding: 48px 24px;
+    text-align: center;
+    color: var(--plum-500);
+    font-size: 14px;
+  }
+  .empty-state .emoji, .init-state .emoji { font-size: 34px; display: block; margin-bottom: 10px; }
+
+  footer#footer {
+    display: flex;
+    justify-content: flex-end;
+    animation: fadeInUp .4s ease both;
+  }
+
+  /* ---------- Tabs ---------- */
+  .tabs { display: flex; gap: 8px; margin-bottom: 20px; animation: fadeInUp .4s ease both; }
+
+  .tab-btn {
+    padding: 10px 18px;
+    border-radius: 12px;
+    border: none;
+    background: rgba(255, 255, 255, 0.55);
+    color: var(--plum-500);
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease, box-shadow .15s ease;
+  }
+  .tab-btn:hover:not(.activo) { background: rgba(249, 217, 227, 0.5); }
+  .tab-btn.activo {
+    background: linear-gradient(135deg, var(--rose-400), var(--rose-500));
+    color: #fff;
+    box-shadow: 0 6px 16px rgba(212, 106, 146, 0.3);
+  }
+
+  /* ---------- Historial ---------- */
+  .field select {
+    padding: 9px 12px;
+    border-radius: 10px;
+    border: 1.5px solid var(--blush-200);
+    background: #fff;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--plum-900);
+    outline: none;
+    cursor: pointer;
+  }
+  .field select:focus { border-color: var(--rose-400); box-shadow: 0 0 0 3px rgba(231, 138, 168, 0.18); }
+
+  .historial-header, .historial-item {
+    display: grid;
+    grid-template-columns: 100px 90px 1fr 170px 140px;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 20px;
+  }
+
+  .historial-header {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--plum-500);
+    background: rgba(249, 217, 227, 0.35);
+    border-bottom: 1px solid rgba(180, 100, 130, 0.12);
+  }
+
+  .historial-item {
+    border-bottom: 1px solid rgba(180, 100, 130, 0.08);
+    font-size: 13.5px;
+    animation: fadeInUp .35s ease both;
+    animation-delay: calc(var(--i, 0) * 45ms);
+  }
+  .historial-item:last-child { border-bottom: none; }
+  .historial-item:hover { background: rgba(249, 217, 227, 0.28); }
+
+  /* ---------- Animations ---------- */
+  @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeInDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 660px) {
+    .lista-header { display: none; }
+
+    .item {
+      grid-template-columns: 28px 1fr;
+      grid-template-areas:
+        "chk fecha"
+        "chk monto"
+        "chk de"
+        "chk metodo"
+        "chk resultado";
+      row-gap: 4px;
+      padding: 14px 16px;
+    }
+    .item .chk { grid-area: chk; align-self: start; }
+    .item .col-fecha { grid-area: fecha; }
+    .item .col-monto { grid-area: monto; }
+    .item .col-de { grid-area: de; white-space: normal; }
+    .item .col-metodo { grid-area: metodo; }
+    .item .col-resultado { grid-area: resultado; }
+
+    .item [data-label]::before {
+      content: attr(data-label) ": ";
+      font-weight: 700;
+      color: var(--plum-500);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .toolbar { gap: 12px; }
+    .field input, .field select { width: 100%; }
+    .hero h1 { font-size: 26px; }
+
+    .historial-header { display: none; }
+    .historial-item {
+      grid-template-columns: 1fr;
+      row-gap: 4px;
+    }
+    .historial-item [data-label]::before {
+      content: attr(data-label) ": ";
+      font-weight: 700;
+      color: var(--plum-500);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+  }
+
+  /* ---------- Onboarding wizard ---------- */
+  .wizard { padding: 28px 32px; animation: fadeInUp .4s ease both; }
+
+  .wizard h2 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 22px;
+    margin: 0 0 14px;
+    color: var(--plum-900);
+  }
+  .wizard p { font-size: 14px; line-height: 1.5; color: var(--plum-700); margin: 0 0 10px; }
+  .wizard .hint { font-size: 12.5px; color: var(--plum-500); font-style: italic; }
+  .wizard .field { max-width: 420px; margin-bottom: 14px; }
+  .wizard .field input { width: 100%; }
+
+  .wizard-steps { display: flex; gap: 8px; margin-bottom: 22px; }
+  .wizard-steps .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--blush-200);
+    transition: background .2s ease, transform .2s ease;
+  }
+  .wizard-steps .dot.activo { background: var(--rose-500); transform: scale(1.3); }
+  .wizard-steps .dot.hecho { background: var(--gold-500); }
+
+  .checklist { list-style: none; padding: 0; margin: 0 0 14px; display: flex; flex-direction: column; gap: 6px; }
+  .checklist li { font-size: 14px; color: var(--plum-700); }
+
+  .wizard-nav { display: flex; justify-content: space-between; margin-top: 24px; }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--plum-500);
+    border: 1.5px solid var(--blush-200);
+  }
+  .btn-ghost:hover:not(:disabled) { background: rgba(249, 217, 227, 0.35); }
+
+  .link-btn {
+    border: none;
+    background: none;
+    color: var(--plum-500);
+    font-family: inherit;
+    font-size: 12.5px;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 4px 0;
+  }
+  .link-btn:hover { color: var(--rose-600); }
+
+  .choice-cards { display: flex; gap: 14px; margin-bottom: 18px; max-width: 420px; }
+  .choice-card {
+    flex: 1;
+    padding: 20px 14px;
+    border-radius: 14px;
+    border: 1.5px solid var(--blush-200);
+    background: #fff;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--plum-700);
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .15s ease, background .15s ease, transform .15s ease;
+  }
+  .choice-card:hover { transform: translateY(-2px); }
+  .choice-card.activo { border-color: var(--rose-500); background: rgba(231, 138, 168, 0.1); color: var(--rose-600); }
+
+  .cert-modo { background: rgba(249, 217, 227, 0.25); border-radius: 12px; padding: 16px; margin-bottom: 14px; max-width: 460px; }
+  .cert-modo .btn { margin: 4px 8px 4px 0; }
+  .hint-box { margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--blush-200); }
+  .hint-box ol { padding-left: 20px; font-size: 13px; color: var(--plum-700); margin: 8px 0; }
+  .hint-box code, .wizard code {
+    background: rgba(138, 100, 114, 0.1);
+    padding: 1px 6px;
+    border-radius: 6px;
+    font-size: 12.5px;
+  }
+
+  .cert-estado { display: flex; gap: 16px; font-size: 13px; margin-bottom: 6px; color: var(--plum-500); }
+  .cert-estado span.ok { color: var(--green-600); font-weight: 600; }
+
+  .resumen { background: rgba(249, 217, 227, 0.25); border-radius: 12px; padding: 16px; font-size: 13.5px; margin-bottom: 14px; max-width: 460px; }
+  .resumen div { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(180,100,130,0.08); gap: 20px; }
+  .resumen div:last-child { border-bottom: none; }
+
+  .wizard-error {
+    color: var(--red-600);
+    font-size: 13px;
+    background: rgba(192,57,43,0.08);
+    padding: 10px 14px;
+    border-radius: 10px;
+    margin-bottom: 14px;
+    max-width: 460px;
+  }
+</style>
+</head>
+<body>
+  <div class="app">
+    <header class="hero">
+      <div class="hero-icon">💅</div>
+      <div>
+        <h1>Beauty Biller</h1>
+        <p>Facturación de turnos — Cejas &amp; Pestañas</p>
+      </div>
+      <button id="btnReconfigurar" class="link-btn" style="margin-left:auto" hidden>⚙ Reconfigurar</button>
+    </header>
+
+    <section id="onboardingWizard" class="card wizard" hidden>
+      <div class="wizard-steps">
+        <span class="dot" data-dot="0"></span>
+        <span class="dot" data-dot="1"></span>
+        <span class="dot" data-dot="2"></span>
+        <span class="dot" data-dot="3"></span>
+        <span class="dot" data-dot="4"></span>
+      </div>
+
+      <div class="wizard-paso" data-paso="0" hidden>
+        <h2>¡Bienvenida a Beauty Biller! 💅</h2>
+        <p>Este asistente te ayuda a configurar la app con tus propios datos, para que puedas facturar tus turnos vos misma.</p>
+        <p>Antes de arrancar, necesitás tener:</p>
+        <ul class="checklist">
+          <li>💛 Clave Fiscal <strong>nivel 3</strong> en ARCA</li>
+          <li>💛 Un <strong>Punto de Venta "Web Services"</strong> habilitado en ARCA</li>
+          <li>💛 Una cuenta en <strong>Mercado Pago Developers</strong></li>
+        </ul>
+        <p class="hint">Si todavía te falta alguno de estos trámites, hacelo primero y después volvé acá.</p>
+        <div class="wizard-nav">
+          <span></span>
+          <button class="btn btn-primary" data-next>Empezar →</button>
+        </div>
+      </div>
+
+      <div class="wizard-paso" data-paso="1" hidden>
+        <h2>Tus datos de ARCA</h2>
+        <div class="field">
+          <label for="wCuit">CUIT (sin guiones)</label>
+          <input type="text" id="wCuit" placeholder="20XXXXXXXXX" maxlength="11">
+        </div>
+        <div class="field">
+          <label for="wPtoVta">Punto de Venta</label>
+          <input type="number" id="wPtoVta" placeholder="3">
+        </div>
+        <div class="field">
+          <label for="wAlias">Alias del certificado</label>
+          <input type="text" id="wAlias" placeholder="ej: beauty-biller">
+        </div>
+        <div class="wizard-nav">
+          <button class="btn btn-ghost" data-back>← Atrás</button>
+          <button class="btn btn-primary" data-next>Siguiente →</button>
+        </div>
+      </div>
+
+      <div class="wizard-paso" data-paso="2" hidden>
+        <h2>Certificado digital de ARCA</h2>
+        <div class="choice-cards">
+          <button type="button" class="choice-card" data-modo="generar">✨<br>Generar uno nuevo</button>
+          <button type="button" class="choice-card" data-modo="existente">📄<br>Ya tengo mi certificado</button>
+        </div>
+
+        <div id="certGenerar" class="cert-modo" hidden>
+          <p>Se va a crear una clave privada y un archivo <code>certificado.csr</code> en esta carpeta (no se manda nada por internet, es todo local).</p>
+          <button id="btnGenerarCert" class="btn btn-primary">Generar clave y solicitud (CSR)</button>
+          <div id="certGenerarInstrucciones" class="hint-box" hidden>
+            <p>✓ Se generó <code>certificado.csr</code>. Ahora:</p>
+            <ol>
+              <li>Entrá a ARCA con tu Clave Fiscal → Administración de Certificados Digitales.</li>
+              <li>Subí el archivo <code>certificado.csr</code> (está en esta misma carpeta).</li>
+              <li>Descargá el certificado que te generen.</li>
+              <li>Elegilo con el botón de abajo.</li>
+            </ol>
+            <button id="btnElegirCrtGenerado" class="btn btn-accent">Elegir certificado descargado (.crt)</button>
+          </div>
+        </div>
+
+        <div id="certExistente" class="cert-modo" hidden>
+          <p>Elegí los dos archivos de tu certificado ya emitido:</p>
+          <button id="btnElegirCrt" class="btn btn-accent">Elegir certificado (.crt)</button>
+          <button id="btnElegirKey" class="btn btn-accent">Elegir clave privada (.key)</button>
+        </div>
+
+        <div id="certEstado" class="cert-estado"></div>
+
+        <div class="wizard-nav">
+          <button class="btn btn-ghost" data-back>← Atrás</button>
+          <button class="btn btn-primary" id="btnPaso2Siguiente" data-next disabled>Siguiente →</button>
+        </div>
+      </div>
+
+      <div class="wizard-paso" data-paso="3" hidden>
+        <h2>Mercado Pago</h2>
+        <p>Necesitás el <strong>Access Token de producción</strong> de tu cuenta de MP.</p>
+        <p class="hint">Mercado Pago → Developers → Tus integraciones → creá una aplicación → Credenciales de producción → copiá el Access Token.</p>
+        <div class="field">
+          <label for="wToken">Access Token</label>
+          <input type="text" id="wToken" placeholder="APP_USR-...">
+        </div>
+        <div class="wizard-nav">
+          <button class="btn btn-ghost" data-back>← Atrás</button>
+          <button class="btn btn-primary" data-next>Siguiente →</button>
+        </div>
+      </div>
+
+      <div class="wizard-paso" data-paso="4" hidden>
+        <h2>Todo listo para guardar</h2>
+        <div id="resumen" class="resumen"></div>
+        <div id="wizardError" class="wizard-error" hidden></div>
+        <div class="wizard-nav">
+          <button class="btn btn-ghost" data-back>← Atrás</button>
+          <button class="btn btn-primary" id="btnGuardarConfig">Guardar configuración ✨</button>
+        </div>
+      </div>
+
+      <div class="wizard-paso" data-paso="5" hidden>
+        <div class="init-state">
+          <span class="emoji">🎉</span>
+          <p>¡Listo! Tu configuración quedó guardada.</p>
+          <p class="hint">Cerrá esta ventana y volvé a abrir Beauty Biller para empezar a facturar tus turnos.</p>
+          <button id="btnCerrarApp" class="btn btn-primary">Cerrar Beauty Biller</button>
+        </div>
+      </div>
+    </section>
+
+    <div id="mainApp" hidden>
+      <div class="tabs">
+        <button class="tab-btn activo" data-tab="facturar">Facturar turnos</button>
+        <button class="tab-btn" data-tab="historial">Historial de facturación</button>
+      </div>
+
+      <div id="tabFacturar">
+        <section class="toolbar card">
+          <div class="field">
+            <label for="dias">Días atrás</label>
+            <input type="number" id="dias" value="7" min="1">
+          </div>
+          <div class="field">
+            <label for="montoMin">Monto mín.</label>
+            <input type="number" id="montoMin" placeholder="$ 0">
+          </div>
+          <div class="field">
+            <label for="montoMax">Monto máx.</label>
+            <input type="number" id="montoMax" placeholder="$ ∞">
+          </div>
+          <button id="btnBuscar" class="btn btn-primary">✨ Buscar transferencias</button>
+          <span id="status" class="status"></span>
+        </section>
+
+        <section id="listaWrap" class="card lista-wrap" hidden>
+          <div class="lista-header">
+            <span></span><span>Fecha</span><span>Monto</span><span>De</span><span>Método</span><span>Resultado</span>
+          </div>
+          <div id="lista"></div>
+        </section>
+
+        <div id="initState" class="card init-state">
+          <span class="emoji">🦋</span>
+          Elegí un rango de días y tocá "Buscar transferencias" para ver los turnos por cobrar.
+        </div>
+
+        <footer id="footer" hidden>
+          <button id="btnFacturar" class="btn btn-accent">Facturar seleccionadas ✨</button>
+        </footer>
+      </div>
+
+      <div id="tabHistorial" hidden>
+        <section class="toolbar card">
+          <div class="field">
+            <label for="historialPeriodo">Período</label>
+            <select id="historialPeriodo">
+              <option value="mes" selected>Último mes</option>
+              <option value="3meses">Últimos 3 meses</option>
+              <option value="6meses">Últimos 6 meses</option>
+              <option value="anio">Último año</option>
+              <option value="todo">Desde el principio</option>
+            </select>
+          </div>
+          <button id="btnConsultarArca" class="btn btn-ghost">🔄 Consultar desde ARCA</button>
+          <span id="historialResumen" class="status"></span>
+        </section>
+
+        <section class="card lista-wrap">
+          <div class="historial-header">
+            <span>Fecha</span><span>Monto</span><span>De</span><span>CAE</span><span>Comprobante</span>
+          </div>
+          <div id="historialLista"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+<script>
+let candidatos = [];
+
+function esperarApi() {
+  return new Promise((resolve) => {
+    if (window.pywebview && window.pywebview.api) return resolve();
+    window.addEventListener("pywebviewready", () => resolve());
+  });
+}
+
+async function buscar() {
+  const dias = document.getElementById("dias").value;
+  const status = document.getElementById("status");
+  const btn = document.getElementById("btnBuscar");
+
+  status.innerHTML = '<span class="spinner"></span> Buscando...';
+  btn.disabled = true;
+  const resp = await window.pywebview.api.buscar_transferencias(dias);
+  btn.disabled = false;
+
+  if (!resp.ok) {
+    status.textContent = "";
+    alert("Error consultando Mercado Pago: " + resp.error);
+    return;
+  }
+
+  candidatos = resp.candidatos;
+  document.getElementById("initState").hidden = true;
+  document.getElementById("listaWrap").hidden = false;
+  render();
+}
+
+function candidatosFiltrados() {
+  const min = parseFloat(document.getElementById("montoMin").value);
+  const max = parseFloat(document.getElementById("montoMax").value);
+  return candidatos.filter((c) => {
+    if (!isNaN(min) && c.monto < min) return false;
+    if (!isNaN(max) && c.monto > max) return false;
+    return true;
+  });
+}
+
+function render() {
+  const lista = candidatosFiltrados();
+  const cont = document.getElementById("lista");
+  const status = document.getElementById("status");
+  cont.innerHTML = "";
+
+  status.textContent = candidatos.length
+    ? `${lista.length} de ${candidatos.length} transferencias`
+    : "";
+
+  if (candidatos.length && !lista.length) {
+    cont.innerHTML = `<div class="empty-state"><span class="emoji">🔍</span>Ninguna transferencia coincide con ese rango de monto.</div>`;
+    document.getElementById("footer").hidden = true;
+    return;
+  }
+
+  lista.forEach((c, i) => {
+    const div = document.createElement("div");
+    div.className = "item" + (c.ya_facturada ? " ya-facturada" : "");
+    div.style.setProperty("--i", i);
+
+    const disabled = c.ya_facturada ? "disabled" : "";
+    let resultadoHtml = "";
+    if (c.ya_facturada) {
+      resultadoHtml = `<span class="badge badge-ok">✓ Facturada — CAE ${c.cae_previo}</span>`;
+    }
+
+    div.innerHTML = `
+      <span class="chk"><input type="checkbox" data-id="${c.id}" ${disabled}></span>
+      <span class="col-fecha" data-label="Fecha">${c.fecha}</span>
+      <span class="col-monto" data-label="Monto">$${c.monto}</span>
+      <span class="col-de" data-label="De">${c.de}</span>
+      <span class="col-metodo" data-label="Método">${c.metodo}</span>
+      <span class="col-resultado" data-label="Resultado">${resultadoHtml}</span>
+    `;
+    cont.appendChild(div);
+  });
+
+  document.getElementById("footer").hidden = false;
+}
+
+async function facturarSeleccionadas() {
+  const checks = [...document.querySelectorAll("#lista input[type=checkbox]:checked")];
+  if (checks.length === 0) {
+    alert("Tildá al menos una transferencia para facturar");
+    return;
+  }
+
+  const seleccionadas = checks.map((chk) => candidatos.find((c) => String(c.id) === chk.dataset.id));
+  const total = seleccionadas.reduce((acc, c) => acc + c.monto, 0);
+
+  const confirmar = confirm(
+    `Vas a emitir ${seleccionadas.length} Factura/s C en ARCA (PRODUCCIÓN, con CAE real) ` +
+    `por un total de $${total}.\n\n¿Confirmás?`
+  );
+  if (!confirmar) return;
+
+  const btnFacturar = document.getElementById("btnFacturar");
+  btnFacturar.disabled = true;
+
+  for (const chk of checks) {
+    chk.closest(".item").querySelector(".col-resultado").innerHTML = `<span class="badge badge-pending"><span class="spinner"></span> Facturando...</span>`;
+  }
+
+  const ids = checks.map((chk) => chk.dataset.id);
+  const resultados = await window.pywebview.api.facturar(ids);
+
+  for (const r of resultados) {
+    const chk = document.querySelector(`#lista input[data-id="${r.id}"]`);
+    if (!chk) continue;
+    const celda = chk.closest(".item").querySelector(".col-resultado");
+    if (r.ok) {
+      celda.innerHTML = `<span class="badge badge-ok">✓ OK — CAE ${r.cae}</span>`;
+    } else {
+      celda.innerHTML = `<span class="badge badge-error">✕ Rechazada: ${r.error}</span>`;
+    }
+  }
+
+  btnFacturar.disabled = false;
+}
+
+// --- Onboarding wizard ---
+let pasoActual = 0;
+
+function mostrarVista(necesitaOnboarding) {
+  document.getElementById("onboardingWizard").hidden = !necesitaOnboarding;
+  document.getElementById("mainApp").hidden = necesitaOnboarding;
+  document.getElementById("btnReconfigurar").hidden = necesitaOnboarding;
+}
+
+function irAPaso(n) {
+  document.querySelectorAll(".wizard-paso").forEach((el) => {
+    el.hidden = el.dataset.paso !== String(n);
+  });
+  document.querySelectorAll(".wizard-steps .dot").forEach((dot, i) => {
+    dot.classList.toggle("activo", i === n);
+    dot.classList.toggle("hecho", i < n);
+  });
+  pasoActual = n;
+  if (n === 4) actualizarResumen();
+}
+
+async function actualizarCertEstado() {
+  const estado = await window.pywebview.api.estado_certificado();
+  const cont = document.getElementById("certEstado");
+  cont.innerHTML = `
+    <span class="${estado.crt_existe ? "ok" : ""}">${estado.crt_existe ? "✓" : "○"} Certificado</span>
+    <span class="${estado.key_existe ? "ok" : ""}">${estado.key_existe ? "✓" : "○"} Clave privada</span>
+  `;
+  document.getElementById("btnPaso2Siguiente").disabled = !(estado.crt_existe && estado.key_existe);
+  return estado;
+}
+
+function actualizarResumen() {
+  const cuit = document.getElementById("wCuit").value;
+  const ptoVta = document.getElementById("wPtoVta").value;
+  const token = document.getElementById("wToken").value;
+  document.getElementById("resumen").innerHTML = `
+    <div><span>CUIT</span><strong>${cuit}</strong></div>
+    <div><span>Punto de Venta</span><strong>${ptoVta}</strong></div>
+    <div><span>Certificado</span><strong>✓ instalado</strong></div>
+    <div><span>Mercado Pago</span><strong>${token ? "✓ token cargado" : "falta"}</strong></div>
+  `;
+}
+
+function iniciarWizard() {
+  document.querySelectorAll(".cert-modo").forEach((el) => (el.hidden = true));
+  document.querySelectorAll(".choice-card").forEach((el) => el.classList.remove("activo"));
+  document.getElementById("certGenerarInstrucciones").hidden = true;
+  document.getElementById("wizardError").hidden = true;
+  irAPaso(0);
+  actualizarCertEstado();
+}
+
+function configurarWizard() {
+  document.querySelectorAll("[data-next]").forEach((btn) => {
+    btn.addEventListener("click", () => irAPaso(Math.min(pasoActual + 1, 5)));
+  });
+  document.querySelectorAll("[data-back]").forEach((btn) => {
+    btn.addEventListener("click", () => irAPaso(Math.max(pasoActual - 1, 0)));
+  });
+
+  document.querySelectorAll(".choice-card").forEach((card) => {
+    card.addEventListener("click", () => {
+      const modo = card.dataset.modo;
+      document.querySelectorAll(".choice-card").forEach((c) => c.classList.toggle("activo", c === card));
+      document.getElementById("certGenerar").hidden = modo !== "generar";
+      document.getElementById("certExistente").hidden = modo !== "existente";
+    });
+  });
+
+  document.getElementById("btnGenerarCert").addEventListener("click", async () => {
+    const cuit = document.getElementById("wCuit").value;
+    const alias = document.getElementById("wAlias").value;
+    const btn = document.getElementById("btnGenerarCert");
+    btn.disabled = true;
+    const resp = await window.pywebview.api.generar_certificado(cuit, alias);
+    btn.disabled = false;
+    if (!resp.ok) {
+      alert("No se pudo generar: " + resp.error);
+      return;
+    }
+    document.getElementById("certGenerarInstrucciones").hidden = false;
+    actualizarCertEstado();
+  });
+
+  document.getElementById("btnElegirCrtGenerado").addEventListener("click", async () => {
+    const resp = await window.pywebview.api.elegir_archivo("crt");
+    if (resp.ok) actualizarCertEstado();
+    else if (resp.error) alert(resp.error);
+  });
+
+  document.getElementById("btnElegirCrt").addEventListener("click", async () => {
+    const resp = await window.pywebview.api.elegir_archivo("crt");
+    if (resp.ok) actualizarCertEstado();
+    else if (resp.error) alert(resp.error);
+  });
+
+  document.getElementById("btnElegirKey").addEventListener("click", async () => {
+    const resp = await window.pywebview.api.elegir_archivo("key");
+    if (resp.ok) actualizarCertEstado();
+    else if (resp.error) alert(resp.error);
+  });
+
+  document.getElementById("btnGuardarConfig").addEventListener("click", async () => {
+    const datos = {
+      cuit: document.getElementById("wCuit").value,
+      pto_vta: document.getElementById("wPtoVta").value,
+      mp_access_token: document.getElementById("wToken").value,
+    };
+    const btn = document.getElementById("btnGuardarConfig");
+    btn.disabled = true;
+    const resp = await window.pywebview.api.guardar_config_inicial(datos);
+    btn.disabled = false;
+
+    const errorBox = document.getElementById("wizardError");
+    if (!resp.ok) {
+      errorBox.textContent = resp.error;
+      errorBox.hidden = false;
+      return;
+    }
+    errorBox.hidden = true;
+    irAPaso(5);
+  });
+
+  document.getElementById("btnCerrarApp").addEventListener("click", () => {
+    window.pywebview.api.cerrar_app();
+  });
+
+  document.getElementById("btnReconfigurar").addEventListener("click", () => {
+    const confirmar = confirm(
+      "¿Reconfigurar Beauty Biller con otros datos? Vas a tener que volver a " +
+      "elegir tu certificado y tu token de Mercado Pago."
+    );
+    if (!confirmar) return;
+    mostrarVista(true);
+    iniciarWizard();
+  });
+}
+
+// --- Tabs + historial de facturación ---
+function cambiarTab(nombre) {
+  document.querySelectorAll(".tab-btn").forEach((b) => b.classList.toggle("activo", b.dataset.tab === nombre));
+  document.getElementById("tabFacturar").hidden = nombre !== "facturar";
+  document.getElementById("tabHistorial").hidden = nombre !== "historial";
+  if (nombre === "historial") cargarHistorial();
+}
+
+function formatearFecha(raw) {
+  if (!raw) return "—";
+  if (/^\d{8}$/.test(raw)) {
+    return `${raw.slice(6, 8)}/${raw.slice(4, 6)}/${raw.slice(0, 4)}`;
+  }
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(raw);
+  if (match) {
+    return `${match[3]}/${match[2]}/${match[1]}`;
+  }
+  return raw;
+}
+
+async function cargarHistorial() {
+  const periodo = document.getElementById("historialPeriodo").value;
+  const resumen = document.getElementById("historialResumen");
+  resumen.innerHTML = '<span class="spinner"></span> Cargando...';
+
+  const resp = await window.pywebview.api.listar_historial(periodo);
+  renderHistorial(resp.registros, resp.total);
+}
+
+async function consultarDesdeArca() {
+  const periodo = document.getElementById("historialPeriodo").value;
+  const btn = document.getElementById("btnConsultarArca");
+  const resumen = document.getElementById("historialResumen");
+
+  btn.disabled = true;
+  resumen.innerHTML = '<span class="spinner"></span> Consultando a ARCA (puede tardar unos segundos)...';
+
+  const resp = await window.pywebview.api.consultar_historial_arca(periodo);
+  btn.disabled = false;
+
+  if (!resp.ok) {
+    resumen.textContent = "";
+    alert("Error consultando ARCA: " + resp.error);
+    return;
+  }
+
+  renderHistorial(resp.registros, resp.total, { origen: "arca" });
+}
+
+function renderHistorial(registros, total, opciones = {}) {
+  const origen = opciones.origen || "local";
+  const cont = document.getElementById("historialLista");
+  const resumen = document.getElementById("historialResumen");
+  cont.innerHTML = "";
+
+  if (!registros.length) {
+    resumen.textContent = "";
+    cont.innerHTML = `<div class="empty-state"><span class="emoji">🧾</span>No se registraron facturas en este período.</div>`;
+    return;
+  }
+
+  const fuente = origen === "arca" ? " · 📡 en vivo desde ARCA" : "";
+  resumen.textContent = `${registros.length} factura${registros.length === 1 ? "" : "s"} — $${total}${fuente}`;
+
+  registros.forEach((r, i) => {
+    const div = document.createElement("div");
+    div.className = "historial-item";
+    div.style.setProperty("--i", i);
+    const de = r.de || (origen === "arca" ? "Consumidor Final" : "—");
+    div.innerHTML = `
+      <span data-label="Fecha">${formatearFecha(r.fecha_emision || r.fecha_transferencia)}</span>
+      <span data-label="Monto" class="col-monto">$${r.monto}</span>
+      <span data-label="De" class="col-de">${de}</span>
+      <span data-label="CAE">${r.cae}</span>
+      <span data-label="Comprobante">PtoVta ${r.pto_vta} — Nº ${r.numero}</span>
+    `;
+    cont.appendChild(div);
+  });
+}
+
+esperarApi().then(async () => {
+  document.getElementById("btnBuscar").addEventListener("click", buscar);
+  document.getElementById("btnFacturar").addEventListener("click", facturarSeleccionadas);
+  document.getElementById("montoMin").addEventListener("input", render);
+  document.getElementById("montoMax").addEventListener("input", render);
+
+  document.querySelectorAll(".tab-btn").forEach((btn) => {
+    btn.addEventListener("click", () => cambiarTab(btn.dataset.tab));
+  });
+  document.getElementById("historialPeriodo").addEventListener("change", cargarHistorial);
+  document.getElementById("btnConsultarArca").addEventListener("click", consultarDesdeArca);
+
+  configurarWizard();
+
+  const estado = await window.pywebview.api.estado_onboarding();
+  mostrarVista(estado.necesita_onboarding);
+  if (estado.necesita_onboarding) {
+    iniciarWizard();
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+pywebview>=6.2
+zeep>=4.3
+requests>=2.32
+cryptography>=43.0

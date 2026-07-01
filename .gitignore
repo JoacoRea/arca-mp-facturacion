@@ -1,0 +1,20 @@
+# Datos propios de cada usuario (nunca deben compartirse)
+config.py
+certificado.crt
+MiClavePrivada.key
+*.key
+*.crt
+*.csr
+credenciales.json
+historial_facturas.json
+
+# Archivos temporales que genera login.py en cada corrida
+tra.xml
+tra.cms
+
+# Notas internas del desarrollo (no son documentación pública)
+NOTAS.md
+
+# Python
+__pycache__/
+*.pyc
