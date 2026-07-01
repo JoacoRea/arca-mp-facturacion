@@ -35,10 +35,24 @@ DIAS_POR_PERIODO = {
     "todo": None,
 }
 
+# Con este CUIT configurado, la interfaz se viste de "Beauty Biller" (paleta
+# rosa, marca y textos propios del local de cejas y pestañas). Para cualquier
+# otro usuario la app usa la estética sobria por defecto. Solo cambia lo
+# visual — la lógica de facturación es exactamente la misma.
+CUIT_TEMA_BEAUTY_BILLER = 27470709478
+
+
+def _tema_bb_activo():
+    import config
+    return getattr(config, "CUIT", None) == CUIT_TEMA_BEAUTY_BILLER
+
 
 class Api:
     def __init__(self):
         self._candidatos = []
+
+    def info_tema(self):
+        return {"beauty_biller": _tema_bb_activo()}
 
     # --- Onboarding ---
     def estado_onboarding(self):
@@ -181,14 +195,15 @@ class Api:
 
 
 if __name__ == "__main__":
-    log.info("Beauty Biller iniciado")
+    tema_bb = _tema_bb_activo()
+    log.info("App iniciada (tema=%s)", "beauty-biller" if tema_bb else "sobrio")
     webview.create_window(
-        "Beauty Biller",
+        "Beauty Biller" if tema_bb else "Facturación ARCA",
         HTML_PATH,
         js_api=Api(),
         width=900,
         height=640,
         min_size=(680, 480),
-        background_color="#FDEEF3",
+        background_color="#FDEEF3" if tema_bb else "#F4F6F9",
     )
     webview.start(icon=ICON_PATH)

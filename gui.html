@@ -3,11 +3,41 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Beauty Biller</title>
+<title>Facturación ARCA</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
+    --blush-50: #f7f9fc;
+    --blush-100: #eef2f7;
+    --blush-200: #dbe2ec;
+    --rose-400: #7d8fa8;
+    --rose-500: #4a6076;
+    --rose-600: #37485a;
+    --gold-400: #c8d2df;
+    --gold-500: #a8b6c7;
+    --plum-900: #1f2933;
+    --plum-700: #3e4c59;
+    --plum-500: #7b8794;
+    --green-600: #2f8f5b;
+    --red-600: #c0392b;
+    --shadow-soft: 0 10px 30px rgba(31, 41, 51, 0.08);
+    --radius: 16px;
+    --bg-page: linear-gradient(160deg, #f7f9fc 0%, #eef2f7 55%, #e7ecf3 100%);
+    --tint-strong: rgba(219, 226, 236, 0.5);
+    --tint-hover: rgba(219, 226, 236, 0.35);
+    --tint-soft: rgba(219, 226, 236, 0.3);
+    --tint-primary: rgba(74, 96, 118, 0.1);
+    --hairline: rgba(62, 76, 89, 0.08);
+    --hairline-strong: rgba(62, 76, 89, 0.14);
+    --focus-ring: 0 0 0 3px rgba(74, 96, 118, 0.15);
+    --glow-primary: 0 6px 18px rgba(55, 72, 90, 0.25);
+    --glow-primary-hover: 0 8px 22px rgba(55, 72, 90, 0.33);
+    --glow-accent: 0 6px 18px rgba(168, 182, 199, 0.45);
+    --glow-accent-hover: 0 8px 22px rgba(168, 182, 199, 0.55);
+  }
+
+  body.tema-bb {
     --blush-50: #fff7f9;
     --blush-100: #fdedf1;
     --blush-200: #f9d9e3;
@@ -19,10 +49,22 @@
     --plum-900: #3a2430;
     --plum-700: #5c3b49;
     --plum-500: #8a6472;
-    --green-600: #2f8f5b;
-    --red-600: #c0392b;
     --shadow-soft: 0 10px 30px rgba(180, 100, 130, 0.14);
-    --radius: 16px;
+    --bg-page:
+      radial-gradient(circle at 12% 8%, rgba(217, 184, 119, 0.16), transparent 40%),
+      radial-gradient(circle at 90% 15%, rgba(231, 138, 168, 0.18), transparent 45%),
+      linear-gradient(160deg, #fff7f9 0%, #fdedf1 45%, #fbeaf0 100%);
+    --tint-strong: var(--tint-strong);
+    --tint-hover: var(--tint-hover);
+    --tint-soft: var(--tint-soft);
+    --tint-primary: var(--tint-primary);
+    --hairline: var(--hairline);
+    --hairline-strong: var(--hairline-strong);
+    --focus-ring: var(--focus-ring);
+    --glow-primary: var(--glow-primary);
+    --glow-primary-hover: var(--glow-primary-hover);
+    --glow-accent: var(--glow-accent);
+    --glow-accent-hover: var(--glow-accent-hover);
   }
 
   * { box-sizing: border-box; }
@@ -33,10 +75,7 @@
     min-height: 100vh;
     font-family: 'Poppins', 'Segoe UI', system-ui, sans-serif;
     color: var(--plum-900);
-    background:
-      radial-gradient(circle at 12% 8%, rgba(217, 184, 119, 0.16), transparent 40%),
-      radial-gradient(circle at 90% 15%, rgba(231, 138, 168, 0.18), transparent 45%),
-      linear-gradient(160deg, var(--blush-50) 0%, var(--blush-100) 45%, #fbeaf0 100%);
+    background: var(--bg-page);
     background-attachment: fixed;
   }
 
@@ -70,6 +109,14 @@
 
   .hero h1 {
     margin: 0;
+    font-family: inherit;
+    font-size: 30px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    color: var(--plum-900);
+  }
+
+  body.tema-bb .hero h1 {
     font-family: 'Playfair Display', Georgia, serif;
     font-size: 32px;
     font-weight: 700;
@@ -132,7 +179,7 @@
 
   .field input:focus {
     border-color: var(--rose-400);
-    box-shadow: 0 0 0 3px rgba(231, 138, 168, 0.18);
+    box-shadow: var(--focus-ring);
   }
 
   /* ---------- Buttons ---------- */
@@ -153,16 +200,16 @@
   .btn-primary {
     color: #fff;
     background: linear-gradient(135deg, var(--rose-500), var(--rose-600));
-    box-shadow: 0 6px 18px rgba(212, 106, 146, 0.35);
+    box-shadow: var(--glow-primary);
   }
-  .btn-primary:hover:not(:disabled) { box-shadow: 0 8px 22px rgba(212, 106, 146, 0.45); transform: translateY(-1px); }
+  .btn-primary:hover:not(:disabled) { box-shadow: var(--glow-primary-hover); transform: translateY(-1px); }
 
   .btn-accent {
     color: var(--plum-900);
     background: linear-gradient(135deg, var(--gold-400), var(--gold-500));
-    box-shadow: 0 6px 18px rgba(201, 161, 95, 0.4);
+    box-shadow: var(--glow-accent);
   }
-  .btn-accent:hover:not(:disabled) { box-shadow: 0 8px 22px rgba(201, 161, 95, 0.5); transform: translateY(-1px); }
+  .btn-accent:hover:not(:disabled) { box-shadow: var(--glow-accent-hover); transform: translateY(-1px); }
 
   .status {
     font-size: 13px;
@@ -198,19 +245,19 @@
     text-transform: uppercase;
     letter-spacing: 0.6px;
     color: var(--plum-500);
-    background: rgba(249, 217, 227, 0.35);
-    border-bottom: 1px solid rgba(180, 100, 130, 0.12);
+    background: var(--tint-strong);
+    border-bottom: 1px solid var(--hairline-strong);
   }
 
   .item {
-    border-bottom: 1px solid rgba(180, 100, 130, 0.08);
+    border-bottom: 1px solid var(--hairline);
     font-size: 13.5px;
     animation: fadeInUp .35s ease both;
     animation-delay: calc(var(--i, 0) * 45ms);
     transition: background .15s ease, opacity .2s ease;
   }
   .item:last-child { border-bottom: none; }
-  .item:hover { background: rgba(249, 217, 227, 0.28); }
+  .item:hover { background: var(--tint-hover); }
   .item.ya-facturada { opacity: 0.6; }
   .item.oculto { display: none; }
 
@@ -245,7 +292,7 @@
   }
   .badge-ok { color: var(--green-600); background: rgba(47, 143, 91, 0.12); }
   .badge-error { color: var(--red-600); background: rgba(192, 57, 43, 0.12); }
-  .badge-pending { color: var(--rose-600); background: rgba(212, 106, 146, 0.12); }
+  .badge-pending { color: var(--rose-600); background: var(--tint-primary); }
 
   .empty-state, .init-state {
     padding: 48px 24px;
@@ -276,11 +323,11 @@
     cursor: pointer;
     transition: background .15s ease, color .15s ease, box-shadow .15s ease;
   }
-  .tab-btn:hover:not(.activo) { background: rgba(249, 217, 227, 0.5); }
+  .tab-btn:hover:not(.activo) { background: var(--tint-strong); }
   .tab-btn.activo {
     background: linear-gradient(135deg, var(--rose-400), var(--rose-500));
     color: #fff;
-    box-shadow: 0 6px 16px rgba(212, 106, 146, 0.3);
+    box-shadow: var(--glow-primary);
   }
 
   /* ---------- Historial ---------- */
@@ -295,7 +342,7 @@
     outline: none;
     cursor: pointer;
   }
-  .field select:focus { border-color: var(--rose-400); box-shadow: 0 0 0 3px rgba(231, 138, 168, 0.18); }
+  .field select:focus { border-color: var(--rose-400); box-shadow: var(--focus-ring); }
 
   .historial-header, .historial-item {
     display: grid;
@@ -311,18 +358,18 @@
     text-transform: uppercase;
     letter-spacing: 0.6px;
     color: var(--plum-500);
-    background: rgba(249, 217, 227, 0.35);
-    border-bottom: 1px solid rgba(180, 100, 130, 0.12);
+    background: var(--tint-strong);
+    border-bottom: 1px solid var(--hairline-strong);
   }
 
   .historial-item {
-    border-bottom: 1px solid rgba(180, 100, 130, 0.08);
+    border-bottom: 1px solid var(--hairline);
     font-size: 13.5px;
     animation: fadeInUp .35s ease both;
     animation-delay: calc(var(--i, 0) * 45ms);
   }
   .historial-item:last-child { border-bottom: none; }
-  .historial-item:hover { background: rgba(249, 217, 227, 0.28); }
+  .historial-item:hover { background: var(--tint-hover); }
 
   /* ---------- Animations ---------- */
   @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -383,10 +430,17 @@
   .wizard { padding: 28px 32px; animation: fadeInUp .4s ease both; }
 
   .wizard h2 {
-    font-family: 'Playfair Display', Georgia, serif;
-    font-size: 22px;
+    font-family: inherit;
+    font-size: 21px;
+    font-weight: 600;
     margin: 0 0 14px;
     color: var(--plum-900);
+  }
+
+  body.tema-bb .wizard h2 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 22px;
+    font-weight: 700;
   }
   .wizard p { font-size: 14px; line-height: 1.5; color: var(--plum-700); margin: 0 0 10px; }
   .wizard .hint { font-size: 12.5px; color: var(--plum-500); font-style: italic; }
@@ -404,6 +458,8 @@
 
   .checklist { list-style: none; padding: 0; margin: 0 0 14px; display: flex; flex-direction: column; gap: 6px; }
   .checklist li { font-size: 14px; color: var(--plum-700); }
+  .checklist li::before { content: "• "; color: var(--plum-500); }
+  body.tema-bb .checklist li::before { content: "💛 "; }
 
   .wizard-nav { display: flex; justify-content: space-between; margin-top: 24px; }
 
@@ -412,7 +468,7 @@
     color: var(--plum-500);
     border: 1.5px solid var(--blush-200);
   }
-  .btn-ghost:hover:not(:disabled) { background: rgba(249, 217, 227, 0.35); }
+  .btn-ghost:hover:not(:disabled) { background: var(--tint-strong); }
 
   .link-btn {
     border: none;
@@ -442,9 +498,9 @@
     transition: border-color .15s ease, background .15s ease, transform .15s ease;
   }
   .choice-card:hover { transform: translateY(-2px); }
-  .choice-card.activo { border-color: var(--rose-500); background: rgba(231, 138, 168, 0.1); color: var(--rose-600); }
+  .choice-card.activo { border-color: var(--rose-500); background: var(--tint-primary); color: var(--rose-600); }
 
-  .cert-modo { background: rgba(249, 217, 227, 0.25); border-radius: 12px; padding: 16px; margin-bottom: 14px; max-width: 460px; }
+  .cert-modo { background: var(--tint-soft); border-radius: 12px; padding: 16px; margin-bottom: 14px; max-width: 460px; }
   .cert-modo .btn { margin: 4px 8px 4px 0; }
   .hint-box { margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--blush-200); }
   .hint-box ol { padding-left: 20px; font-size: 13px; color: var(--plum-700); margin: 8px 0; }
@@ -458,8 +514,8 @@
   .cert-estado { display: flex; gap: 16px; font-size: 13px; margin-bottom: 6px; color: var(--plum-500); }
   .cert-estado span.ok { color: var(--green-600); font-weight: 600; }
 
-  .resumen { background: rgba(249, 217, 227, 0.25); border-radius: 12px; padding: 16px; font-size: 13.5px; margin-bottom: 14px; max-width: 460px; }
-  .resumen div { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(180,100,130,0.08); gap: 20px; }
+  .resumen { background: var(--tint-soft); border-radius: 12px; padding: 16px; font-size: 13.5px; margin-bottom: 14px; max-width: 460px; }
+  .resumen div { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid var(--hairline); gap: 20px; }
   .resumen div:last-child { border-bottom: none; }
 
   .wizard-error {
@@ -476,10 +532,10 @@
 <body>
   <div class="app">
     <header class="hero">
-      <div class="hero-icon">💅</div>
+      <div class="hero-icon" id="heroIcon">🧾</div>
       <div>
-        <h1>Beauty Biller</h1>
-        <p>Facturación de turnos — Cejas &amp; Pestañas</p>
+        <h1 id="heroTitulo">Facturación ARCA</h1>
+        <p id="heroSub">Transferencias de Mercado Pago → Factura C</p>
       </div>
       <button id="btnReconfigurar" class="link-btn" style="margin-left:auto" hidden>⚙ Reconfigurar</button>
     </header>
@@ -494,13 +550,13 @@
       </div>
 
       <div class="wizard-paso" data-paso="0" hidden>
-        <h2>¡Bienvenida a Beauty Biller! 💅</h2>
+        <h2 id="wizardTitulo">Primera configuración</h2>
         <p>Este asistente te ayuda a configurar la app con tus propios datos, para que puedas facturar tus turnos vos misma.</p>
         <p>Antes de arrancar, necesitás tener:</p>
         <ul class="checklist">
-          <li>💛 Clave Fiscal <strong>nivel 3</strong> en ARCA</li>
-          <li>💛 Un <strong>Punto de Venta "Web Services"</strong> habilitado en ARCA</li>
-          <li>💛 Una cuenta en <strong>Mercado Pago Developers</strong></li>
+          <li>Clave Fiscal <strong>nivel 3</strong> en ARCA</li>
+          <li>Un <strong>Punto de Venta "Web Services"</strong> habilitado en ARCA</li>
+          <li>Una cuenta en <strong>Mercado Pago Developers</strong></li>
         </ul>
         <p class="hint">Si todavía te falta alguno de estos trámites, hacelo primero y después volvé acá.</p>
         <div class="wizard-nav">
@@ -585,7 +641,7 @@
         <div id="wizardError" class="wizard-error" hidden></div>
         <div class="wizard-nav">
           <button class="btn btn-ghost" data-back>← Atrás</button>
-          <button class="btn btn-primary" id="btnGuardarConfig">Guardar configuración ✨</button>
+          <button class="btn btn-primary" id="btnGuardarConfig">Guardar configuración</button>
         </div>
       </div>
 
@@ -619,7 +675,7 @@
             <label for="montoMax">Monto máx.</label>
             <input type="number" id="montoMax" placeholder="$ ∞">
           </div>
-          <button id="btnBuscar" class="btn btn-primary">✨ Buscar transferencias</button>
+          <button id="btnBuscar" class="btn btn-primary">Buscar transferencias</button>
           <span id="status" class="status"></span>
         </section>
 
@@ -631,12 +687,12 @@
         </section>
 
         <div id="initState" class="card init-state">
-          <span class="emoji">🦋</span>
+          <span class="emoji" id="initEmoji">🧾</span>
           Elegí un rango de días y tocá "Buscar transferencias" para ver los turnos por cobrar.
         </div>
 
         <footer id="footer" hidden>
-          <button id="btnFacturar" class="btn btn-accent">Facturar seleccionadas ✨</button>
+          <button id="btnFacturar" class="btn btn-accent">Facturar seleccionadas</button>
         </footer>
       </div>
 
@@ -1027,7 +1083,33 @@ function renderHistorial(registros, total, opciones = {}) {
   });
 }
 
+// --- Tema visual ---
+// Por defecto la app usa una estética sobria y neutra. Si el CUIT configurado
+// es el de Beauty Biller, se activa esa marca (paleta rosa, tipografía y
+// textos propios). Es solo visual: la lógica de facturación es idéntica.
+async function aplicarTema() {
+  let bb = false;
+  try {
+    const info = await window.pywebview.api.info_tema();
+    bb = !!(info && info.beauty_biller);
+  } catch (e) {}
+
+  document.body.classList.toggle("tema-bb", bb);
+  if (!bb) return;
+
+  document.getElementById("heroIcon").textContent = "💅";
+  document.getElementById("heroTitulo").textContent = "Beauty Biller";
+  document.getElementById("heroSub").textContent = "Facturación de turnos — Cejas & Pestañas";
+  document.getElementById("wizardTitulo").textContent = "¡Bienvenida a Beauty Biller! 💅";
+  document.getElementById("btnBuscar").textContent = "✨ Buscar transferencias";
+  document.getElementById("btnFacturar").textContent = "Facturar seleccionadas ✨";
+  document.getElementById("btnGuardarConfig").textContent = "Guardar configuración ✨";
+  document.getElementById("initEmoji").textContent = "🦋";
+}
+
 esperarApi().then(async () => {
+  await aplicarTema();
+
   document.getElementById("btnBuscar").addEventListener("click", buscar);
   document.getElementById("btnFacturar").addEventListener("click", facturarSeleccionadas);
   document.getElementById("montoMin").addEventListener("input", render);
