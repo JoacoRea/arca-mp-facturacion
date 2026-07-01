@@ -15,6 +15,7 @@ import facturar
 import historial
 
 HTML_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "gui.html")
+ICON_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "icon.ico")
 
 TIPOS_ARCHIVO = {
     "crt": ("Certificado (*.crt;*.pem)",),
@@ -156,4 +157,4 @@ if __name__ == "__main__":
         min_size=(680, 480),
         background_color="#FDEEF3",
     )
-    webview.start()
+    webview.start(icon=ICON_PATH)
