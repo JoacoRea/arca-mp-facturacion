@@ -167,6 +167,13 @@
     width: 100%; margin-bottom: -4px;
   }
   .defaults .hint { font-size: 12px; color: var(--plum-500); width: 100%; margin-top: 2px; }
+  /* Dato del perfil que no es editable porque no hay nada que elegir. */
+  .valor-fijo {
+    padding: 9px 12px; border-radius: 10px;
+    border: 1.5px dashed var(--blush-200);
+    background: var(--tint-soft);
+    font-size: 14px; color: var(--plum-700);
+  }
 
   /* ---------- Lista ---------- */
   .lista-wrap { overflow: hidden; margin-bottom: 16px; animation: fadeInUp .5s ease both; }
@@ -547,10 +554,15 @@
               <option value="movimiento">Fecha del movimiento</option>
             </select>
           </div>
+          <div class="field" id="bloqueCondicionVenta" hidden>
+            <label>Condición de venta</label>
+            <span class="valor-fijo" id="condicionVenta"></span>
+          </div>
           <button id="btnAplicarSeleccionadas" class="btn btn-ghost btn-chico">Aplicar a las seleccionadas</button>
           <div class="hint">
-            Esto define el valor por defecto de todos los movimientos. Cada uno se puede
-            cambiar por separado tildándolo en la lista.
+            Estos son los valores con los que ya vienen todos los movimientos. Cada uno se
+            puede cambiar por separado tildándolo en la lista. La condición de venta queda
+            registrada en tu historial: el Web Service de ARCA no tiene ese campo.
           </div>
         </section>
 
@@ -612,8 +624,12 @@ const overrides = {};
 // Último rechazo de ARCA por movimiento, para que el motivo sobreviva a que la
 // lista se vuelva a dibujar.
 const erroresFactura = {};
+// Arranca con el perfil de facturación que manda Python (asesoría = servicio,
+// a consumidor final, cobrado por transferencia). Cada movimiento se puede
+// cambiar igual desde su fila.
 const generales = { concepto: 2, receptor: "final", condicion_iva: 5, fecha_modo: "hoy" };
-let opcionesArca = { conceptos: [], condiciones_iva: [], umbral_identificacion: 0, tolerancia_fecha: {} };
+let detallePorDefecto = "";
+let opcionesArca = { conceptos: [], condiciones_iva: [], umbral_identificacion: 0, tolerancia_fecha: {}, perfil: {} };
 
 const monedaAR = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", minimumFractionDigits: 2 });
 
@@ -716,7 +732,7 @@ function opcionesDe(movimiento) {
     concepto: Number(propias.concepto ?? generales.concepto),
     receptor,
     condicion_iva: Number(propias.condicion_iva ?? generales.condicion_iva),
-    detalle: propias.detalle ?? "",
+    detalle: propias.detalle ?? detallePorDefecto,
   };
 }
 
@@ -819,7 +835,7 @@ function filaHtml(m) {
         </div>
         <div class="field crece">
           <label>Detalle (opcional)</label>
-          <input type="text" data-rol="detalle" maxlength="200" value="${esc(opciones.detalle)}" placeholder="ej: alquiler mayo, honorarios...">
+          <input type="text" data-rol="detalle" maxlength="200" value="${esc(opciones.detalle)}" placeholder="ej: Asesoría">
         </div>
         ${avisos.map((a) => `<span class="badge badge-aviso">⚠ ${esc(a)}</span>`).join("")}
         <span class="nota">El detalle queda en tu historial: la Factura C por Web Service no lleva descripción.</span>
@@ -916,9 +932,26 @@ function configurarLista() {
   });
 }
 
+function aplicarPerfil() {
+  const perfil = opcionesArca.perfil || {};
+  if (perfil.concepto != null) generales.concepto = Number(perfil.concepto);
+  if (perfil.receptor) generales.receptor = perfil.receptor;
+  if (perfil.condicion_iva != null) generales.condicion_iva = Number(perfil.condicion_iva);
+  if (perfil.fecha_modo) generales.fecha_modo = perfil.fecha_modo;
+  detallePorDefecto = perfil.detalle || "";
+
+  if (perfil.condicion_venta) {
+    document.getElementById("condicionVenta").textContent = perfil.condicion_venta;
+    document.getElementById("bloqueCondicionVenta").hidden = false;
+  }
+}
+
 function configurarDefaults() {
   document.getElementById("genConcepto").innerHTML = opcionesSelect(opcionesArca.conceptos, generales.concepto);
   document.getElementById("genCondicion").innerHTML = opcionesSelect(opcionesArca.condiciones_iva, generales.condicion_iva);
+  document.getElementById("genReceptor").value = generales.receptor;
+  document.getElementById("genFecha").value = generales.fecha_modo;
+  document.getElementById("campoGenCondicion").hidden = generales.receptor !== "cuit";
 
   document.getElementById("genConcepto").addEventListener("change", (e) => {
     generales.concepto = Number(e.target.value);
@@ -949,7 +982,7 @@ function configurarDefaults() {
         concepto: generales.concepto,
         receptor: generales.receptor,
         condicion_iva: generales.condicion_iva,
-        detalle: (overrides[id] || {}).detalle ?? "",
+        detalle: (overrides[id] || {}).detalle ?? detallePorDefecto,
       };
     });
     render();
@@ -1219,6 +1252,7 @@ function renderHistorial(registros, total, opciones = {}) {
 // ============================ Arranque ============================
 esperarApi().then(async () => {
   opcionesArca = await window.pywebview.api.opciones_facturacion();
+  aplicarPerfil();
 
   document.getElementById("btnElegirExtracto").addEventListener("click", elegirExtracto);
   document.getElementById("btnFacturar").addEventListener("click", facturarSeleccionadas);

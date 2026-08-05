@@ -38,16 +38,38 @@ además de leer el registro local.
 2. Se abre la app (`python gui_galicia.py`) y se elige ese archivo. Aparecen
    todos los **créditos** del extracto (los débitos se ignoran: nunca se
    facturan), con fecha, importe, nombre y CUIT del titular que transfirió.
-3. Se tildan los que hay que facturar y, para cada uno, **cómo** facturarlo:
+3. Se tildan los que hay que facturar. Todos vienen ya con el perfil de
+   facturación puesto (ver abajo); si alguna vez hace falta una excepción, se
+   puede cambiar movimiento por movimiento, o fijar otro valor para todos en
+   la barra "Cómo facturar":
    - **Concepto**: Productos, Servicios, o Productos y Servicios.
    - **Receptor**: consumidor final, o identificado con el DNI o el CUIT del
      titular que sale del extracto (con su condición frente al IVA).
-   - **Detalle** opcional, que queda guardado en el historial local.
+   - **Detalle**, que queda guardado en el historial local.
    - **Fecha de la factura**: hoy (lo normal) o la del movimiento.
-   Los valores se pueden fijar de una vez para todos en la barra "Cómo
-   facturar" y después ajustar movimiento por movimiento.
 4. Se emiten las Facturas C y se guarda el historial local, igual que en la
    variante de Mercado Pago.
+
+### Perfil de facturación
+
+Todo lo que se factura por acá sale siempre igual, así que ese es el estado
+inicial de la pantalla (`PERFIL`, arriba de todo en `gui_galicia.py`):
+
+| Dato | Valor | Cómo viaja a ARCA |
+|---|---|---|
+| Tipo de comprobante | Factura C | `CbteTipo = 11` |
+| Condición de IVA del receptor | Consumidor Final | `DocTipo 99` / `DocNro 0` / `CondicionIVAReceptorId 5` |
+| Tipo | Servicio | `Concepto = 2` |
+| Producto / servicio | Asesoría | solo al historial local |
+| Condición de venta | Transferencia bancaria | solo al historial local |
+| Fechas "desde" y "hasta" del servicio | Día de facturación | `FchServDesde = FchServHasta = CbteFch` |
+
+Las dos filas que dicen "solo al historial local" son campos que WSFEv1
+**no tiene**: la descripción del producto/servicio y la condición de venta
+existen en "Comprobantes en Línea" (el formulario web de ARCA), no en el Web
+Service. La app los guarda en `historial_facturas.json` para que el registro
+propio quede completo, pero no aparecen en el comprobante que emite ARCA.
+Para cambiar cualquiera de estos valores por defecto, se edita `PERFIL`.
 
 Cada movimiento del extracto recibe un ID propio y estable (fecha + importe +
 texto del movimiento), así que se puede volver a importar el mismo mes —o un
@@ -64,8 +86,8 @@ Detalles que vale saber:
 - El DNI se deduce del CUIL de las personas físicas (27-13242063-2 → DNI
   13242063).
 - La Factura C emitida por Web Service no lleva descripción de los ítems, así
-  que el "detalle" que se escribe en pantalla es solo para el historial
-  propio: a ARCA no viaja.
+  que el "detalle" que se escribe en pantalla (por defecto, "Asesoría") es
+  solo para el historial propio: a ARCA no viaja.
 
 ## Requisitos
 

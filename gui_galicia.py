@@ -45,6 +45,23 @@ DIAS_POR_PERIODO = {
     "todo": None,
 }
 
+# Perfil de facturación de este usuario: todo lo que factura es asesoría, o sea
+# un servicio, cobrado por transferencia bancaria y facturado a consumidor
+# final. Estos son los valores con los que arranca la pantalla; cada movimiento
+# se puede cambiar a mano si alguna vez hace falta una excepción.
+PERFIL = {
+    "concepto": facturar.CONCEPTO_SERVICIOS,
+    "receptor": "final",
+    "condicion_iva": facturar.CONDICION_CONSUMIDOR_FINAL,
+    "detalle": "Asesoría",
+    "fecha_modo": "hoy",
+    # WSFEv1 no tiene campo de condición de venta: existe en "Comprobantes en
+    # Línea" (el formulario web de ARCA), no en el Web Service. Se guarda en el
+    # historial local para que el registro propio quede completo, pero no se le
+    # manda a ARCA porque no hay dónde.
+    "condicion_venta": "Transferencia bancaria",
+}
+
 # A partir de cierto importe, ARCA exige identificar al comprador aunque sea
 # consumidor final. El monto lo actualiza ARCA cada tanto por resolución: esto
 # es solo un aviso en pantalla (no bloquea nada), así que si quedó viejo,
@@ -131,6 +148,7 @@ class Api:
             "condiciones_iva": [{"id": k, "nombre": v} for k, v in facturar.CONDICION_IVA_RECEPTOR.items()],
             "umbral_identificacion": UMBRAL_IDENTIFICACION_CF,
             "tolerancia_fecha": {str(k): v for k, v in TOLERANCIA_FECHA.items()},
+            "perfil": PERFIL,
         }
 
     def elegir_extracto(self):
@@ -187,13 +205,13 @@ class Api:
         WSFEv1. Levanta ValueError con un mensaje mostrable si la combinación no
         se puede facturar."""
         try:
-            concepto = int(item.get("concepto", facturar.CONCEPTO_SERVICIOS))
+            concepto = int(item.get("concepto") or PERFIL["concepto"])
         except (TypeError, ValueError):
             raise ValueError("Concepto inválido")
         if concepto not in facturar.CONCEPTOS:
             raise ValueError("Concepto inválido")
 
-        receptor = str(item.get("receptor") or "final")
+        receptor = str(item.get("receptor") or PERFIL["receptor"])
         if receptor == "final":
             doc_tipo, doc_nro = facturar.DOC_CONSUMIDOR_FINAL, 0
             condicion = facturar.CONDICION_CONSUMIDOR_FINAL
@@ -207,7 +225,7 @@ class Api:
                 raise ValueError("El extracto no trae el CUIT del titular para esta transferencia")
             doc_tipo, doc_nro = facturar.DOC_CUIT, int(movimiento["cuit"])
             try:
-                condicion = int(item.get("condicion_iva", facturar.CONDICION_CONSUMIDOR_FINAL))
+                condicion = int(item.get("condicion_iva") or PERFIL["condicion_iva"])
             except (TypeError, ValueError):
                 raise ValueError("Condición frente al IVA inválida")
             if condicion not in facturar.CONDICION_IVA_RECEPTOR:
@@ -215,8 +233,7 @@ class Api:
         else:
             raise ValueError(f"Receptor inválido: {receptor}")
 
-        fecha_mov = _fecha_movimiento(movimiento)
-        fecha_emision = fecha_mov if item.get("fecha_modo") == "movimiento" else None
+        fecha_emision = _fecha_movimiento(movimiento) if item.get("fecha_modo") == "movimiento" else None
 
         return {
             "importe": movimiento["monto"],
@@ -225,9 +242,9 @@ class Api:
             "doc_tipo": doc_tipo,
             "doc_nro": doc_nro,
             "condicion_iva_receptor": condicion,
-            # El período de servicio es el día en que entró la plata, aunque la
-            # factura se emita hoy.
-            "fecha_servicio": fecha_mov,
+            # Sin fecha_servicio: el período "desde"/"hasta" del servicio es el
+            # día en que se factura, no el día en que entró la transferencia.
+            "fecha_servicio": None,
         }
 
     def facturar(self, items):
@@ -273,6 +290,9 @@ class Api:
                     "doc_tipo": resultado.get("doc_tipo"),
                     "doc_nro": resultado.get("doc_nro"),
                     "detalle": detalle,
+                    # No viaja a ARCA (WSFEv1 no tiene el campo): queda acá para
+                    # que el registro propio esté completo.
+                    "condicion_venta": PERFIL["condicion_venta"],
                     "cuenta": movimiento.get("cuenta"),
                 })
                 movimiento["ya_facturada"] = True
