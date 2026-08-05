@@ -8,6 +8,7 @@ asistente de primera configuración y lo arma sola).
 # --- Mercado Pago ---
 # Token de PRODUCCIÓN de la cuenta de MP que recibe las transferencias
 # (Mercado Pago Developers -> tu app -> Credenciales de producción).
+# La variante de Banco Galicia (gui_galicia.py) no lo usa: dejalo en None.
 MP_ACCESS_TOKEN = "APP_USR-..."
 
 # --- ARCA / AFIP ---

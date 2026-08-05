@@ -34,11 +34,20 @@ def ya_facturada(mp_id):
     return str(mp_id) in cargar_historial()
 
 
-def registrar_factura(mp_id, transferencia, resultado):
-    """Guarda que la transferencia `mp_id` ya se facturó. Llamar solo tras un resultado ok."""
+def registrar_factura(id_operacion, transferencia, resultado, extra=None):
+    """Guarda que la transferencia `id_operacion` ya se facturó. Llamar solo tras un resultado ok.
+
+    `id_operacion` es el ID del pago en Mercado Pago o, en la variante de Banco
+    Galicia, el ID que arma extracto_galicia.py para esa fila del extracto.
+    `extra` permite guardar datos propios de cada origen (concepto facturado,
+    detalle escrito por el usuario, CUIT del titular) sin que este módulo tenga
+    que conocerlos."""
     historial = cargar_historial()
-    historial[str(mp_id)] = {
-        "mp_id": mp_id,
+    historial[str(id_operacion)] = {
+        "id": str(id_operacion),
+        # Se mantiene el nombre viejo del campo para no romper los historiales
+        # ya guardados por versiones anteriores de la app.
+        "mp_id": id_operacion,
         "fecha_transferencia": transferencia.get("fecha"),
         "fecha_emision": resultado.get("fecha_emision"),
         "monto": transferencia.get("monto"),
@@ -47,6 +56,7 @@ def registrar_factura(mp_id, transferencia, resultado):
         "numero": resultado.get("numero"),
         "pto_vta": resultado.get("pto_vta"),
         "vencimiento_cae": resultado.get("vencimiento_cae"),
+        **(extra or {}),
     }
     # Escritura atómica (temporal + rename): si la app se corta a mitad de la
     # escritura, el historial anterior queda intacto en vez de corromperse.

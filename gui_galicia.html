@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Facturación Galicia → ARCA</title>
+<style>
+  :root {
+    --blush-50: #f7f9fc;
+    --blush-100: #eef2f7;
+    --blush-200: #dbe2ec;
+    --rose-400: #7d8fa8;
+    --rose-500: #4a6076;
+    --rose-600: #37485a;
+    --gold-400: #c8d2df;
+    --gold-500: #a8b6c7;
+    --plum-900: #1f2933;
+    --plum-700: #3e4c59;
+    --plum-500: #7b8794;
+    --green-600: #2f8f5b;
+    --amber-600: #b7791f;
+    --red-600: #c0392b;
+    --shadow-soft: 0 10px 30px rgba(31, 41, 51, 0.08);
+    --radius: 16px;
+    --bg-page: linear-gradient(160deg, #f7f9fc 0%, #eef2f7 55%, #e7ecf3 100%);
+    --tint-strong: rgba(219, 226, 236, 0.5);
+    --tint-hover: rgba(219, 226, 236, 0.35);
+    --tint-soft: rgba(219, 226, 236, 0.3);
+    --tint-primary: rgba(74, 96, 118, 0.1);
+    --hairline: rgba(62, 76, 89, 0.08);
+    --hairline-strong: rgba(62, 76, 89, 0.14);
+    --focus-ring: 0 0 0 3px rgba(74, 96, 118, 0.15);
+    --glow-primary: 0 6px 18px rgba(55, 72, 90, 0.25);
+    --glow-primary-hover: 0 8px 22px rgba(55, 72, 90, 0.33);
+    --glow-accent: 0 6px 18px rgba(168, 182, 199, 0.45);
+    --glow-accent-hover: 0 8px 22px rgba(168, 182, 199, 0.55);
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+
+  html, body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: var(--plum-900);
+    background: var(--bg-page);
+    background-attachment: fixed;
+  }
+
+  .app { max-width: 1080px; margin: 0 auto; padding: 24px 22px 90px; }
+
+  /* ---------- Header ---------- */
+  .hero { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; animation: fadeInDown .5s ease both; }
+
+  .hero-icon {
+    width: 54px; height: 54px; flex-shrink: 0;
+    border-radius: 18px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 25px;
+    background: linear-gradient(135deg, var(--rose-400), var(--gold-400));
+    box-shadow: var(--shadow-soft);
+  }
+
+  .hero h1 { margin: 0; font-size: 27px; font-weight: 600; letter-spacing: 0.2px; }
+  .hero p { margin: 2px 0 0; font-size: 13px; color: var(--plum-500); letter-spacing: 0.3px; }
+
+  /* ---------- Cards ---------- */
+  .card {
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .toolbar {
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px;
+    animation: fadeInUp .5s ease both;
+  }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.6px; color: var(--plum-500);
+  }
+  .field input, .field select {
+    padding: 9px 12px;
+    border-radius: 10px;
+    border: 1.5px solid var(--blush-200);
+    background: #fff;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--plum-900);
+    outline: none;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  .field input:focus, .field select:focus { border-color: var(--rose-400); box-shadow: var(--focus-ring); }
+  .field input[type="number"] { width: 118px; }
+  .field.crece { flex: 1; min-width: 180px; }
+  .field.crece input { width: 100%; }
+
+  .check-inline {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 13px; color: var(--plum-700); cursor: pointer;
+    padding-bottom: 9px;
+  }
+  .check-inline input { width: 16px; height: 16px; accent-color: var(--rose-500); cursor: pointer; }
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    border: none; border-radius: 12px; padding: 11px 20px;
+    font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn:disabled { opacity: 0.5; cursor: default; transform: none; }
+
+  .btn-primary { color: #fff; background: linear-gradient(135deg, var(--rose-500), var(--rose-600)); box-shadow: var(--glow-primary); }
+  .btn-primary:hover:not(:disabled) { box-shadow: var(--glow-primary-hover); transform: translateY(-1px); }
+
+  .btn-accent { color: var(--plum-900); background: linear-gradient(135deg, var(--gold-400), var(--gold-500)); box-shadow: var(--glow-accent); }
+  .btn-accent:hover:not(:disabled) { box-shadow: var(--glow-accent-hover); transform: translateY(-1px); }
+
+  .btn-ghost { background: transparent; color: var(--plum-500); border: 1.5px solid var(--blush-200); }
+  .btn-ghost:hover:not(:disabled) { background: var(--tint-strong); }
+
+  .btn-chico { padding: 8px 14px; font-size: 12.5px; }
+
+  .link-btn {
+    border: none; background: none; color: var(--plum-500);
+    font-family: inherit; font-size: 12.5px; cursor: pointer;
+    text-decoration: underline; padding: 4px 0;
+  }
+  .link-btn:hover { color: var(--rose-600); }
+
+  .status { font-size: 13px; color: var(--plum-500); display: inline-flex; align-items: center; gap: 8px; padding-bottom: 9px; }
+
+  .spinner {
+    width: 13px; height: 13px; border-radius: 50%;
+    border: 2px solid var(--blush-200); border-top-color: var(--rose-500);
+    animation: spin .7s linear infinite;
+  }
+
+  /* ---------- Datos de la cuenta ---------- */
+  .cuenta {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 18px;
+    padding: 14px 20px; margin-bottom: 16px;
+    animation: fadeInUp .4s ease both;
+  }
+  .cuenta .dato { display: flex; flex-direction: column; gap: 2px; }
+  .cuenta .dato span { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--plum-500); font-weight: 600; }
+  .cuenta .dato strong { font-size: 13.5px; font-weight: 600; color: var(--plum-900); }
+  .cuenta .separador { flex: 1; }
+
+  /* ---------- Barra de "cómo facturar" ---------- */
+  .defaults {
+    padding: 14px 20px; margin-bottom: 16px;
+    display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px;
+    border-left: 4px solid var(--rose-400);
+  }
+  .defaults .titulo {
+    font-size: 12px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.6px; color: var(--plum-500);
+    width: 100%; margin-bottom: -4px;
+  }
+  .defaults .hint { font-size: 12px; color: var(--plum-500); width: 100%; margin-top: 2px; }
+
+  /* ---------- Lista ---------- */
+  .lista-wrap { overflow: hidden; margin-bottom: 16px; animation: fadeInUp .5s ease both; }
+
+  .lista-header, .item-fila {
+    display: grid;
+    grid-template-columns: 34px 92px 118px minmax(140px, 1fr) 132px 190px;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+  }
+
+  .lista-header {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.6px; color: var(--plum-500);
+    background: var(--tint-strong);
+    border-bottom: 1px solid var(--hairline-strong);
+  }
+
+  /* Sin animación por fila a propósito: la lista se vuelve a dibujar en cada
+     tecla del buscador y en cada cambio de opciones, y un fade escalonado la
+     dejaría parpadeando (con 40 movimientos, las últimas filas ni se veían). */
+  .item {
+    border-bottom: 1px solid var(--hairline);
+    font-size: 13.5px;
+    transition: background .15s ease;
+  }
+  .item:last-child { border-bottom: none; }
+  .item:hover { background: var(--tint-hover); }
+  .item.ya-facturada { opacity: 0.62; }
+  .item.elegida { background: var(--tint-primary); }
+
+  .item input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--rose-500); cursor: pointer; }
+  .item input[type="checkbox"]:disabled { cursor: default; }
+
+  .col-monto { font-weight: 700; color: var(--rose-600); }
+  .col-de { overflow: hidden; }
+  .col-de strong { display: block; font-weight: 600; color: var(--plum-900); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .col-de small { color: var(--plum-500); font-size: 11.5px; }
+
+  /* display:inline-block es necesario: en un span inline el max-width y el
+     recorte con puntos suspensivos no se aplican, y los conceptos largos del
+     banco se desbordaban encima de la columna de al lado. */
+  .tag {
+    display: inline-block; max-width: 100%;
+    font-size: 10.5px; color: var(--plum-500);
+    background: rgba(123, 135, 148, 0.12);
+    padding: 3px 8px; border-radius: 20px;
+    text-transform: uppercase; letter-spacing: 0.3px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    vertical-align: middle;
+  }
+  .tag-otro { color: var(--amber-600); background: rgba(183, 121, 31, 0.12); }
+
+  .badge {
+    display: inline-block; max-width: 100%;
+    font-size: 12px; font-weight: 600; padding: 4px 10px;
+    border-radius: 20px;
+  }
+  .badge-ok { color: var(--green-600); background: rgba(47, 143, 91, 0.12); }
+  .badge-error { color: var(--red-600); background: rgba(192, 57, 43, 0.12); }
+  .badge-pending { color: var(--rose-600); background: var(--tint-primary); display: inline-flex; align-items: center; gap: 6px; }
+  .badge-aviso { color: var(--amber-600); background: rgba(183, 121, 31, 0.12); }
+
+  /* ---------- Opciones por movimiento ---------- */
+  .opciones {
+    display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px;
+    margin: 0 18px;
+    padding: 12px 0 14px 44px;
+    border-top: 1px dashed var(--hairline-strong);
+  }
+  .opciones .field label { font-size: 10px; }
+  .opciones .field select, .opciones .field input { padding: 7px 10px; font-size: 13px; }
+  .opciones .nota { font-size: 11.5px; color: var(--plum-500); padding-bottom: 8px; max-width: 100%; }
+
+  .empty-state, .init-state { padding: 44px 24px; text-align: center; color: var(--plum-500); font-size: 14px; }
+  .empty-state .emoji, .init-state .emoji { font-size: 34px; display: block; margin-bottom: 10px; }
+  .init-state p { margin: 6px 0; }
+
+  /* ---------- Footer fijo ---------- */
+  .barra-accion {
+    position: sticky; bottom: 14px;
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px 20px;
+    animation: fadeInUp .4s ease both;
+  }
+  .barra-accion .resumen-sel { font-size: 13.5px; color: var(--plum-700); }
+  .barra-accion .resumen-sel strong { color: var(--rose-600); font-size: 15px; }
+  .barra-accion .separador { flex: 1; }
+
+  /* ---------- Tabs ---------- */
+  .tabs { display: flex; gap: 8px; margin-bottom: 18px; animation: fadeInUp .4s ease both; }
+  .tab-btn {
+    padding: 10px 18px; border-radius: 12px; border: none;
+    background: rgba(255, 255, 255, 0.55); color: var(--plum-500);
+    font-family: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer;
+    transition: background .15s ease, color .15s ease, box-shadow .15s ease;
+  }
+  .tab-btn:hover:not(.activo) { background: var(--tint-strong); }
+  .tab-btn.activo { background: linear-gradient(135deg, var(--rose-400), var(--rose-500)); color: #fff; box-shadow: var(--glow-primary); }
+
+  /* ---------- Historial ---------- */
+  .historial-header, .historial-item {
+    display: grid;
+    grid-template-columns: 96px 120px minmax(140px, 1fr) 130px 160px 130px;
+    align-items: center; gap: 10px; padding: 12px 18px;
+  }
+  .historial-header {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.6px; color: var(--plum-500);
+    background: var(--tint-strong); border-bottom: 1px solid var(--hairline-strong);
+  }
+  .historial-item { border-bottom: 1px solid var(--hairline); font-size: 13.5px; }
+  .historial-item:last-child { border-bottom: none; }
+  .historial-item:hover { background: var(--tint-hover); }
+
+  /* ---------- Animaciones ---------- */
+  @keyframes fadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeInDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 860px) {
+    .lista-header, .historial-header { display: none; }
+
+    .item-fila {
+      grid-template-columns: 28px 1fr;
+      grid-template-areas:
+        "chk fecha"
+        "chk monto"
+        "chk de"
+        "chk tipo"
+        "chk resultado";
+      row-gap: 4px; padding: 14px 16px;
+    }
+    .item-fila .chk { grid-area: chk; align-self: start; }
+    .item-fila .col-fecha { grid-area: fecha; }
+    .item-fila .col-monto { grid-area: monto; }
+    .item-fila .col-de { grid-area: de; }
+    .item-fila .col-tipo { grid-area: tipo; }
+    .item-fila .col-resultado { grid-area: resultado; }
+    .item-fila [data-label]::before {
+      content: attr(data-label) ": ";
+      font-weight: 700; color: var(--plum-500);
+      font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px;
+    }
+    .opciones { padding-left: 16px; }
+    .opciones .field { flex: 1; min-width: 140px; }
+
+    .historial-item { grid-template-columns: 1fr; row-gap: 4px; }
+    .historial-item [data-label]::before {
+      content: attr(data-label) ": ";
+      font-weight: 700; color: var(--plum-500);
+      font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px;
+    }
+  }
+
+  /* ---------- Asistente de configuración ---------- */
+  .wizard { padding: 26px 30px; animation: fadeInUp .4s ease both; }
+  .wizard h2 { font-size: 21px; font-weight: 600; margin: 0 0 14px; }
+  .wizard p { font-size: 14px; line-height: 1.5; color: var(--plum-700); margin: 0 0 10px; }
+  .wizard .hint { font-size: 12.5px; color: var(--plum-500); font-style: italic; }
+  .wizard .field { max-width: 420px; margin-bottom: 14px; }
+  .wizard .field input { width: 100%; }
+
+  .wizard-steps { display: flex; gap: 8px; margin-bottom: 22px; }
+  .wizard-steps .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--blush-200);
+    transition: background .2s ease, transform .2s ease;
+  }
+  .wizard-steps .dot.activo { background: var(--rose-500); transform: scale(1.3); }
+  .wizard-steps .dot.hecho { background: var(--gold-500); }
+
+  .checklist { list-style: none; padding: 0; margin: 0 0 14px; display: flex; flex-direction: column; gap: 6px; }
+  .checklist li { font-size: 14px; color: var(--plum-700); }
+  .checklist li::before { content: "• "; color: var(--plum-500); }
+
+  .wizard-nav { display: flex; justify-content: space-between; margin-top: 24px; }
+
+  .choice-cards { display: flex; gap: 14px; margin-bottom: 18px; max-width: 420px; }
+  .choice-card {
+    flex: 1; padding: 20px 14px; border-radius: 14px;
+    border: 1.5px solid var(--blush-200); background: #fff;
+    font-family: inherit; font-size: 13px; font-weight: 600;
+    color: var(--plum-700); text-align: center; cursor: pointer;
+    transition: border-color .15s ease, background .15s ease, transform .15s ease;
+  }
+  .choice-card:hover { transform: translateY(-2px); }
+  .choice-card.activo { border-color: var(--rose-500); background: var(--tint-primary); color: var(--rose-600); }
+
+  .cert-modo { background: var(--tint-soft); border-radius: 12px; padding: 16px; margin-bottom: 14px; max-width: 460px; }
+  .cert-modo .btn { margin: 4px 8px 4px 0; }
+  .hint-box { margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--blush-200); }
+  .hint-box ol { padding-left: 20px; font-size: 13px; color: var(--plum-700); margin: 8px 0; }
+  .hint-box code, .wizard code { background: rgba(123, 135, 148, 0.14); padding: 1px 6px; border-radius: 6px; font-size: 12.5px; }
+
+  .cert-estado { display: flex; gap: 16px; font-size: 13px; margin-bottom: 6px; color: var(--plum-500); }
+  .cert-estado span.ok { color: var(--green-600); font-weight: 600; }
+
+  .resumen { background: var(--tint-soft); border-radius: 12px; padding: 16px; font-size: 13.5px; margin-bottom: 14px; max-width: 460px; }
+  .resumen div { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid var(--hairline); gap: 20px; }
+  .resumen div:last-child { border-bottom: none; }
+
+  .wizard-error {
+    color: var(--red-600); font-size: 13px;
+    background: rgba(192, 57, 43, 0.08);
+    padding: 10px 14px; border-radius: 10px; margin-bottom: 14px; max-width: 460px;
+  }
+</style>
+</head>
+<body>
+  <div class="app">
+    <header class="hero">
+      <div class="hero-icon">🏦</div>
+      <div>
+        <h1>Facturación Galicia</h1>
+        <p>Extracto del Home Banking → Factura C en ARCA</p>
+      </div>
+      <button id="btnReconfigurar" class="link-btn" style="margin-left:auto" hidden>⚙ Reconfigurar</button>
+    </header>
+
+    <!-- ===================== Asistente de primera configuración ===================== -->
+    <section id="onboardingWizard" class="card wizard" hidden>
+      <div class="wizard-steps">
+        <span class="dot" data-dot="0"></span>
+        <span class="dot" data-dot="1"></span>
+        <span class="dot" data-dot="2"></span>
+        <span class="dot" data-dot="3"></span>
+      </div>
+
+      <div class="wizard-paso" data-paso="0" hidden>
+        <h2>Primera configuración</h2>
+        <p>Este asistente configura la app con tus datos de ARCA para que puedas emitir tus Facturas C desde acá.</p>
+        <p>Antes de arrancar necesitás tener:</p>
+        <ul class="checklist">
+          <li>Clave Fiscal <strong>nivel 3</strong> en ARCA</li>
+          <li>Un <strong>Punto de Venta "Web Services"</strong> habilitado en ARCA</li>
+          <li>Un <strong>certificado digital</strong> (si no lo tenés, el asistente te ayuda a generarlo)</li>
+        </ul>
+        <p class="hint">Los movimientos salen del Excel que bajás del Home Banking de Galicia: no hace falta ninguna clave del banco acá.</p>
+        <div class="wizard-nav">
+          <span></span>
+          <button class="btn btn-primary" data-next>Empezar →</button>
+        </div>
+      </div>
+
+      <div class="wizard-paso" data-paso="1" hidden>
+        <h2>Tus datos de ARCA</h2>
+        <div class="field">
+          <label for="wCuit">CUIT (sin guiones)</label>
+          <input type="text" id="wCuit" placeholder="20XXXXXXXXX" maxlength="11">
+        </div>
+        <div class="field">
+          <label for="wPtoVta">Punto de Venta</label>
+          <input type="number" id="wPtoVta" placeholder="1">
+        </div>
+        <div class="field">
+          <label for="wAlias">Alias del certificado</label>
+          <input type="text" id="wAlias" placeholder="ej: facturacion-galicia">
+        </div>
+        <div class="wizard-nav">
+          <button class="btn btn-ghost" data-back>← Atrás</button>
+          <button class="btn btn-primary" data-next>Siguiente →</button>
+        </div>
+      </div>
+
+      <div class="wizard-paso" data-paso="2" hidden>
+        <h2>Certificado digital de ARCA</h2>
+        <div class="choice-cards">
+          <button type="button" class="choice-card" data-modo="generar">✨<br>Generar uno nuevo</button>
+          <button type="button" class="choice-card" data-modo="existente">📄<br>Ya tengo mi certificado</button>
+        </div>
+
+        <div id="certGenerar" class="cert-modo" hidden>
+          <p>Se va a crear una clave privada y un archivo <code>certificado.csr</code> en esta carpeta (no se manda nada por internet, es todo local).</p>
+          <button id="btnGenerarCert" class="btn btn-primary">Generar clave y solicitud (CSR)</button>
+          <div id="certGenerarInstrucciones" class="hint-box" hidden>
+            <p>✓ Se generó <code>certificado.csr</code>. Ahora:</p>
+            <ol>
+              <li>Entrá a ARCA con tu Clave Fiscal → Administración de Certificados Digitales.</li>
+              <li>Subí el archivo <code>certificado.csr</code> (está en esta misma carpeta).</li>
+              <li>Descargá el certificado que te generen.</li>
+              <li>Elegilo con el botón de abajo.</li>
+            </ol>
+            <button id="btnElegirCrtGenerado" class="btn btn-accent">Elegir certificado descargado (.crt)</button>
+          </div>
+        </div>
+
+        <div id="certExistente" class="cert-modo" hidden>
+          <p>Elegí los dos archivos de tu certificado ya emitido:</p>
+          <button id="btnElegirCrt" class="btn btn-accent">Elegir certificado (.crt)</button>
+          <button id="btnElegirKey" class="btn btn-accent">Elegir clave privada (.key)</button>
+        </div>
+
+        <div id="certEstado" class="cert-estado"></div>
+
+        <div class="wizard-nav">
+          <button class="btn btn-ghost" data-back>← Atrás</button>
+          <button class="btn btn-primary" id="btnPaso2Siguiente" data-next disabled>Siguiente →</button>
+        </div>
+      </div>
+
+      <div class="wizard-paso" data-paso="3" hidden>
+        <h2>Todo listo para guardar</h2>
+        <div id="resumen" class="resumen"></div>
+        <div id="wizardError" class="wizard-error" hidden></div>
+        <div class="wizard-nav">
+          <button class="btn btn-ghost" data-back>← Atrás</button>
+          <button class="btn btn-primary" id="btnGuardarConfig">Guardar configuración</button>
+        </div>
+      </div>
+
+      <div class="wizard-paso" data-paso="4" hidden>
+        <div class="init-state">
+          <span class="emoji">🎉</span>
+          <p>¡Listo! Tu configuración quedó guardada.</p>
+          <p class="hint">Cerrá esta ventana y volvé a abrir la app para empezar a facturar.</p>
+          <button id="btnCerrarApp" class="btn btn-primary">Cerrar</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== App ===================== -->
+    <div id="mainApp" hidden>
+      <div class="tabs">
+        <button class="tab-btn activo" data-tab="facturar">Facturar movimientos</button>
+        <button class="tab-btn" data-tab="historial">Historial de facturación</button>
+      </div>
+
+      <div id="tabFacturar">
+        <section class="toolbar card">
+          <button id="btnElegirExtracto" class="btn btn-primary">📂 Elegir extracto de Galicia (.xlsx)</button>
+          <span id="status" class="status"></span>
+        </section>
+
+        <section id="infoCuenta" class="card cuenta" hidden></section>
+
+        <section id="filtros" class="toolbar card" hidden>
+          <div class="field crece">
+            <label for="buscar">Buscar por nombre o CUIT</label>
+            <input type="text" id="buscar" placeholder="ej: Cueva">
+          </div>
+          <div class="field">
+            <label for="montoMin">Monto mín.</label>
+            <input type="number" id="montoMin" placeholder="$ 0">
+          </div>
+          <div class="field">
+            <label for="montoMax">Monto máx.</label>
+            <input type="number" id="montoMax" placeholder="$ ∞">
+          </div>
+          <label class="check-inline"><input type="checkbox" id="soloTransferencias" checked> Solo transferencias</label>
+          <label class="check-inline"><input type="checkbox" id="ocultarFacturadas"> Ocultar ya facturadas</label>
+        </section>
+
+        <section id="panelDefaults" class="card defaults" hidden>
+          <div class="titulo">Cómo facturar</div>
+          <div class="field">
+            <label for="genConcepto">Concepto</label>
+            <select id="genConcepto"></select>
+          </div>
+          <div class="field">
+            <label for="genReceptor">Receptor</label>
+            <select id="genReceptor">
+              <option value="final">Consumidor final (sin identificar)</option>
+              <option value="dni">DNI del titular (sale del CUIL)</option>
+              <option value="cuit">CUIT del titular</option>
+            </select>
+          </div>
+          <div class="field" id="campoGenCondicion" hidden>
+            <label for="genCondicion">Condición frente al IVA</label>
+            <select id="genCondicion"></select>
+          </div>
+          <div class="field">
+            <label for="genFecha">Fecha de la factura</label>
+            <select id="genFecha">
+              <option value="hoy">Hoy</option>
+              <option value="movimiento">Fecha del movimiento</option>
+            </select>
+          </div>
+          <button id="btnAplicarSeleccionadas" class="btn btn-ghost btn-chico">Aplicar a las seleccionadas</button>
+          <div class="hint">
+            Esto define el valor por defecto de todos los movimientos. Cada uno se puede
+            cambiar por separado tildándolo en la lista.
+          </div>
+        </section>
+
+        <section id="listaWrap" class="card lista-wrap" hidden>
+          <div class="lista-header">
+            <span><input type="checkbox" id="chkTodas" title="Seleccionar todas las visibles"></span>
+            <span>Fecha</span><span>Monto</span><span>De</span><span>Movimiento</span><span>Resultado</span>
+          </div>
+          <div id="lista"></div>
+        </section>
+
+        <div id="initState" class="card init-state">
+          <span class="emoji">📄</span>
+          <p>Entrá al Home Banking de Galicia → Cuentas → Movimientos, elegí el período y exportá a Excel.</p>
+          <p class="hint">Después tocá "Elegir extracto de Galicia" y aparecen acá todas las transferencias recibidas.</p>
+        </div>
+
+        <footer id="barraAccion" class="card barra-accion" hidden>
+          <span class="resumen-sel" id="resumenSeleccion"></span>
+          <span class="separador"></span>
+          <button id="btnFacturar" class="btn btn-accent">Facturar seleccionadas</button>
+        </footer>
+      </div>
+
+      <div id="tabHistorial" hidden>
+        <section class="toolbar card">
+          <div class="field">
+            <label for="historialPeriodo">Período</label>
+            <select id="historialPeriodo">
+              <option value="mes" selected>Último mes</option>
+              <option value="3meses">Últimos 3 meses</option>
+              <option value="6meses">Últimos 6 meses</option>
+              <option value="anio">Último año</option>
+              <option value="todo">Desde el principio</option>
+            </select>
+          </div>
+          <button id="btnConsultarArca" class="btn btn-ghost">🔄 Consultar desde ARCA</button>
+          <span id="historialResumen" class="status"></span>
+        </section>
+
+        <section class="card lista-wrap">
+          <div class="historial-header">
+            <span>Fecha</span><span>Monto</span><span>De</span><span>Concepto</span><span>CAE</span><span>Comprobante</span>
+          </div>
+          <div id="historialLista"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+<script>
+// ============================ Estado ============================
+let movimientos = [];
+let extractoActual = null;
+const seleccionados = new Set();
+// Solo guarda lo que el usuario cambió a mano para un movimiento puntual; el
+// resto sigue los valores generales de la barra "Cómo facturar".
+const overrides = {};
+// Último rechazo de ARCA por movimiento, para que el motivo sobreviva a que la
+// lista se vuelva a dibujar.
+const erroresFactura = {};
+const generales = { concepto: 2, receptor: "final", condicion_iva: 5, fecha_modo: "hoy" };
+let opcionesArca = { conceptos: [], condiciones_iva: [], umbral_identificacion: 0, tolerancia_fecha: {} };
+
+const monedaAR = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", minimumFractionDigits: 2 });
+
+// Escapa datos dinámicos antes de interpolarlos en innerHTML: los nombres y
+// conceptos vienen del archivo del banco (texto externo).
+function esc(valor) {
+  return String(valor ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  })[c]);
+}
+
+function plata(monto) {
+  const numero = Number(monto);
+  return isNaN(numero) ? "—" : monedaAR.format(numero);
+}
+
+function redondear(monto) {
+  return Math.round(Number(monto) * 100) / 100;
+}
+
+function formatearFecha(raw) {
+  if (!raw) return "—";
+  if (/^\d{8}$/.test(raw)) return `${raw.slice(6, 8)}/${raw.slice(4, 6)}/${raw.slice(0, 4)}`;
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(raw);
+  return match ? `${match[3]}/${match[2]}/${match[1]}` : raw;
+}
+
+function diasDesde(fechaIso) {
+  const fecha = new Date(fechaIso + "T00:00:00");
+  if (isNaN(fecha)) return 0;
+  const hoy = new Date();
+  return Math.floor((hoy - fecha) / 86400000);
+}
+
+function esperarApi() {
+  return new Promise((resolve) => {
+    if (window.pywebview && window.pywebview.api) return resolve();
+    window.addEventListener("pywebviewready", () => resolve());
+  });
+}
+
+// ============================ Extracto ============================
+async function elegirExtracto() {
+  const status = document.getElementById("status");
+  const btn = document.getElementById("btnElegirExtracto");
+
+  status.innerHTML = '<span class="spinner"></span> Leyendo el archivo...';
+  btn.disabled = true;
+  const resp = await window.pywebview.api.elegir_extracto();
+  btn.disabled = false;
+
+  if (!resp.ok) {
+    status.textContent = "";
+    if (!resp.cancelado) alert("No se pudo leer el extracto:\n\n" + resp.error);
+    return;
+  }
+
+  movimientos = resp.movimientos;
+  extractoActual = resp;
+  seleccionados.clear();
+  for (const clave of Object.keys(overrides)) delete overrides[clave];
+  for (const clave of Object.keys(erroresFactura)) delete erroresFactura[clave];
+
+  mostrarCuenta(resp);
+  document.getElementById("initState").hidden = true;
+  document.getElementById("filtros").hidden = false;
+  document.getElementById("panelDefaults").hidden = false;
+  document.getElementById("listaWrap").hidden = false;
+  btn.textContent = "📂 Elegir otro extracto";
+  render();
+}
+
+function mostrarCuenta(resp) {
+  const cuenta = (resp.cuentas && resp.cuentas[0]) || {};
+  const yaFacturadas = movimientos.filter((m) => m.ya_facturada).length;
+  const total = redondear(movimientos.reduce((acc, m) => acc + m.monto, 0));
+
+  const cont = document.getElementById("infoCuenta");
+  cont.innerHTML = `
+    <div class="dato"><span>Archivo</span><strong>${esc(resp.archivo)}</strong></div>
+    <div class="dato"><span>Cuenta</span><strong>${esc(cuenta.cuenta || "—")}</strong></div>
+    <div class="dato"><span>Período</span><strong>${esc(cuenta.periodo || "—")}</strong></div>
+    <div class="dato"><span>Créditos</span><strong>${movimientos.length} — ${esc(plata(total))}</strong></div>
+    <div class="dato"><span>Ya facturados</span><strong>${yaFacturadas}</strong></div>
+  `;
+  cont.hidden = false;
+}
+
+// ============================ Opciones por movimiento ============================
+function opcionesDe(movimiento) {
+  const propias = overrides[movimiento.id] || {};
+  let receptor = propias.receptor ?? generales.receptor;
+
+  // Un movimiento sin CUIT válido en el extracto no se puede identificar: cae
+  // a consumidor final en vez de romper al facturar.
+  if (receptor === "cuit" && !movimiento.cuit) receptor = "final";
+  if (receptor === "dni" && !movimiento.dni) receptor = "final";
+
+  return {
+    concepto: Number(propias.concepto ?? generales.concepto),
+    receptor,
+    condicion_iva: Number(propias.condicion_iva ?? generales.condicion_iva),
+    detalle: propias.detalle ?? "",
+  };
+}
+
+function setOverride(id, campo, valor) {
+  overrides[id] = overrides[id] || {};
+  overrides[id][campo] = valor;
+}
+
+function textoReceptor(movimiento, opciones) {
+  if (opciones.receptor === "cuit") return `CUIT ${movimiento.cuit_formateado}`;
+  if (opciones.receptor === "dni") return `DNI ${movimiento.dni}`;
+  return "Consumidor final";
+}
+
+// ============================ Lista ============================
+function movimientosVisibles() {
+  const texto = document.getElementById("buscar").value.trim().toLowerCase();
+  const min = parseFloat(document.getElementById("montoMin").value);
+  const max = parseFloat(document.getElementById("montoMax").value);
+  const soloTransferencias = document.getElementById("soloTransferencias").checked;
+  const ocultarFacturadas = document.getElementById("ocultarFacturadas").checked;
+
+  return movimientos.filter((m) => {
+    if (soloTransferencias && !m.es_transferencia) return false;
+    if (ocultarFacturadas && m.ya_facturada) return false;
+    if (!isNaN(min) && m.monto < min) return false;
+    if (!isNaN(max) && m.monto > max) return false;
+    if (texto) {
+      const buscable = `${m.de} ${m.cuit} ${m.cuit_formateado} ${m.concepto_banco}`.toLowerCase();
+      if (!buscable.includes(texto)) return false;
+    }
+    return true;
+  });
+}
+
+function opcionesSelect(items, elegido) {
+  return items
+    .map((o) => `<option value="${esc(o.id)}" ${Number(o.id) === Number(elegido) ? "selected" : ""}>${esc(o.nombre)}</option>`)
+    .join("");
+}
+
+function filaHtml(m) {
+  const opciones = opcionesDe(m);
+  const elegida = seleccionados.has(m.id);
+  const deshabilitado = m.ya_facturada ? "disabled" : "";
+
+  let resultado = "";
+  if (m.ya_facturada) {
+    resultado = `<span class="badge badge-ok">✓ Facturada — CAE ${esc(m.cae_previo || "")}</span>`;
+  } else if (erroresFactura[m.id]) {
+    resultado = `<span class="badge badge-error">✕ ${esc(erroresFactura[m.id])}</span>`;
+  }
+
+  const identificable = m.cuit ? "" : "disabled";
+  const conDni = m.dni ? "" : "disabled";
+  const grande = m.monto >= opcionesArca.umbral_identificacion && opciones.receptor === "final";
+
+  const avisos = [];
+  if (grande) {
+    avisos.push("Por el monto, ARCA puede exigir identificar al cliente: elegí DNI o CUIT.");
+  }
+  if (generales.fecha_modo === "movimiento") {
+    const tolerancia = Number(opcionesArca.tolerancia_fecha[String(opciones.concepto)] || 10);
+    if (diasDesde(m.fecha) > tolerancia) {
+      avisos.push(`El movimiento es de hace ${diasDesde(m.fecha)} días: ARCA acepta fechar hasta ${tolerancia} días atrás. Usá "Hoy".`);
+    }
+  }
+
+  return `
+    <div class="item ${m.ya_facturada ? "ya-facturada" : ""} ${elegida ? "elegida" : ""}" data-id="${esc(m.id)}">
+      <div class="item-fila">
+        <span class="chk"><input type="checkbox" data-rol="elegir" ${elegida ? "checked" : ""} ${deshabilitado}></span>
+        <span class="col-fecha" data-label="Fecha">${esc(formatearFecha(m.fecha))}</span>
+        <span class="col-monto" data-label="Monto">${esc(plata(m.monto))}</span>
+        <span class="col-de" data-label="De">
+          <strong>${esc(m.de)}</strong>
+          <small>${esc(m.cuit_formateado || "sin CUIT en el extracto")}</small>
+        </span>
+        <span class="col-tipo" data-label="Movimiento">
+          <span class="tag ${m.es_transferencia ? "" : "tag-otro"}" title="${esc(m.detalle_banco)}">${esc(m.concepto_banco || "—")}</span>
+        </span>
+        <span class="col-resultado" data-label="Resultado">${resultado}</span>
+      </div>
+      <div class="opciones" ${elegida ? "" : "hidden"}>
+        <div class="field">
+          <label>Facturar como</label>
+          <select data-rol="concepto">${opcionesSelect(opcionesArca.conceptos, opciones.concepto)}</select>
+        </div>
+        <div class="field">
+          <label>Receptor</label>
+          <select data-rol="receptor">
+            <option value="final" ${opciones.receptor === "final" ? "selected" : ""}>Consumidor final</option>
+            <option value="dni" ${opciones.receptor === "dni" ? "selected" : ""} ${conDni}>DNI ${esc(m.dni || "—")}</option>
+            <option value="cuit" ${opciones.receptor === "cuit" ? "selected" : ""} ${identificable}>CUIT ${esc(m.cuit_formateado || "—")}</option>
+          </select>
+        </div>
+        <div class="field" data-rol="campo-condicion" ${opciones.receptor === "cuit" ? "" : "hidden"}>
+          <label>Condición IVA</label>
+          <select data-rol="condicion">${opcionesSelect(opcionesArca.condiciones_iva, opciones.condicion_iva)}</select>
+        </div>
+        <div class="field crece">
+          <label>Detalle (opcional)</label>
+          <input type="text" data-rol="detalle" maxlength="200" value="${esc(opciones.detalle)}" placeholder="ej: alquiler mayo, honorarios...">
+        </div>
+        ${avisos.map((a) => `<span class="badge badge-aviso">⚠ ${esc(a)}</span>`).join("")}
+        <span class="nota">El detalle queda en tu historial: la Factura C por Web Service no lleva descripción.</span>
+      </div>
+    </div>
+  `;
+}
+
+function render() {
+  const visibles = movimientosVisibles();
+  const cont = document.getElementById("lista");
+  const status = document.getElementById("status");
+
+  status.textContent = movimientos.length
+    ? `${visibles.length} de ${movimientos.length} créditos del extracto`
+    : "";
+
+  if (!visibles.length) {
+    cont.innerHTML = `<div class="empty-state"><span class="emoji">🔍</span>Ningún movimiento coincide con estos filtros.</div>`;
+  } else {
+    cont.innerHTML = visibles.map(filaHtml).join("");
+  }
+
+  const todasElegidas = visibles.length > 0 && visibles.every((m) => m.ya_facturada || seleccionados.has(m.id));
+  document.getElementById("chkTodas").checked = todasElegidas;
+  actualizarBarra();
+}
+
+function actualizarBarra() {
+  const elegidos = movimientos.filter((m) => seleccionados.has(m.id));
+  const barra = document.getElementById("barraAccion");
+  const total = redondear(elegidos.reduce((acc, m) => acc + m.monto, 0));
+
+  barra.hidden = elegidos.length === 0;
+  document.getElementById("resumenSeleccion").innerHTML =
+    `${elegidos.length} movimiento${elegidos.length === 1 ? "" : "s"} — <strong>${esc(plata(total))}</strong>`;
+}
+
+function movimientoDe(elemento) {
+  const fila = elemento.closest(".item");
+  return fila ? movimientos.find((m) => m.id === fila.dataset.id) : null;
+}
+
+function configurarLista() {
+  const cont = document.getElementById("lista");
+
+  cont.addEventListener("change", (evento) => {
+    const destino = evento.target;
+    const movimiento = movimientoDe(destino);
+    if (!movimiento) return;
+    const fila = destino.closest(".item");
+    const rol = destino.dataset.rol;
+
+    if (rol === "elegir") {
+      if (destino.checked) seleccionados.add(movimiento.id);
+      else seleccionados.delete(movimiento.id);
+      fila.classList.toggle("elegida", destino.checked);
+      fila.querySelector(".opciones").hidden = !destino.checked;
+      actualizarBarra();
+      return;
+    }
+
+    if (rol === "concepto") {
+      setOverride(movimiento.id, "concepto", Number(destino.value));
+      render();
+      return;
+    }
+
+    if (rol === "receptor") {
+      setOverride(movimiento.id, "receptor", destino.value);
+      render();
+      return;
+    }
+
+    if (rol === "condicion") {
+      setOverride(movimiento.id, "condicion_iva", Number(destino.value));
+    }
+  });
+
+  // El detalle no re-renderiza: perdería el foco mientras se escribe.
+  cont.addEventListener("input", (evento) => {
+    if (evento.target.dataset.rol !== "detalle") return;
+    const movimiento = movimientoDe(evento.target);
+    if (movimiento) setOverride(movimiento.id, "detalle", evento.target.value);
+  });
+
+  document.getElementById("chkTodas").addEventListener("change", (evento) => {
+    const visibles = movimientosVisibles().filter((m) => !m.ya_facturada);
+    visibles.forEach((m) => {
+      if (evento.target.checked) seleccionados.add(m.id);
+      else seleccionados.delete(m.id);
+    });
+    render();
+  });
+}
+
+function configurarDefaults() {
+  document.getElementById("genConcepto").innerHTML = opcionesSelect(opcionesArca.conceptos, generales.concepto);
+  document.getElementById("genCondicion").innerHTML = opcionesSelect(opcionesArca.condiciones_iva, generales.condicion_iva);
+
+  document.getElementById("genConcepto").addEventListener("change", (e) => {
+    generales.concepto = Number(e.target.value);
+    render();
+  });
+  document.getElementById("genReceptor").addEventListener("change", (e) => {
+    generales.receptor = e.target.value;
+    document.getElementById("campoGenCondicion").hidden = e.target.value !== "cuit";
+    render();
+  });
+  document.getElementById("genCondicion").addEventListener("change", (e) => {
+    generales.condicion_iva = Number(e.target.value);
+    render();
+  });
+  document.getElementById("genFecha").addEventListener("change", (e) => {
+    generales.fecha_modo = e.target.value;
+    render();
+  });
+
+  // Pisa lo que se haya tocado a mano en las filas elegidas.
+  document.getElementById("btnAplicarSeleccionadas").addEventListener("click", () => {
+    if (!seleccionados.size) {
+      alert("Primero tildá los movimientos a los que querés aplicarle estas opciones.");
+      return;
+    }
+    seleccionados.forEach((id) => {
+      overrides[id] = {
+        concepto: generales.concepto,
+        receptor: generales.receptor,
+        condicion_iva: generales.condicion_iva,
+        detalle: (overrides[id] || {}).detalle ?? "",
+      };
+    });
+    render();
+  });
+}
+
+// ============================ Facturar ============================
+async function facturarSeleccionadas() {
+  const elegidos = movimientos.filter((m) => seleccionados.has(m.id) && !m.ya_facturada);
+  if (!elegidos.length) {
+    alert("Tildá al menos un movimiento para facturar.");
+    return;
+  }
+
+  const items = elegidos.map((m) => {
+    const opciones = opcionesDe(m);
+    return {
+      id: m.id,
+      concepto: opciones.concepto,
+      receptor: opciones.receptor,
+      condicion_iva: opciones.condicion_iva,
+      detalle: opciones.detalle,
+      fecha_modo: generales.fecha_modo,
+    };
+  });
+
+  const total = redondear(elegidos.reduce((acc, m) => acc + m.monto, 0));
+  const porConcepto = {};
+  items.forEach((item) => {
+    const nombre = (opcionesArca.conceptos.find((c) => Number(c.id) === item.concepto) || {}).nombre || "?";
+    porConcepto[nombre] = (porConcepto[nombre] || 0) + 1;
+  });
+  const detalleConceptos = Object.entries(porConcepto).map(([nombre, cantidad]) => `  • ${cantidad} como ${nombre}`).join("\n");
+
+  const confirmar = confirm(
+    `Vas a emitir ${elegidos.length} Factura/s C en ARCA (PRODUCCIÓN, con CAE real) ` +
+    `por un total de ${plata(total)}.\n\n${detalleConceptos}\n\n` +
+    `Fecha de la factura: ${generales.fecha_modo === "hoy" ? "hoy" : "la del movimiento"}.\n\n¿Confirmás?`
+  );
+  if (!confirmar) return;
+
+  const btnFacturar = document.getElementById("btnFacturar");
+  btnFacturar.disabled = true;
+
+  elegidos.forEach((m) => {
+    const celda = document.querySelector(`.item[data-id="${CSS.escape(m.id)}"] .col-resultado`);
+    if (celda) celda.innerHTML = `<span class="badge badge-pending"><span class="spinner"></span> Facturando...</span>`;
+  });
+
+  const resultados = await window.pywebview.api.facturar(items);
+  btnFacturar.disabled = false;
+
+  resultados.forEach((r) => {
+    const movimiento = movimientos.find((m) => m.id === r.id);
+    if (!movimiento) return;
+    if (r.ok) {
+      movimiento.ya_facturada = true;
+      movimiento.cae_previo = r.cae;
+      seleccionados.delete(r.id);
+      delete erroresFactura[r.id];
+    } else {
+      erroresFactura[r.id] = [].concat(r.error || ["Rechazada por ARCA"]).join(" · ");
+    }
+  });
+
+  // Se vuelve a dibujar todo: las que salieron bien quedan bloqueadas para no
+  // facturarlas de nuevo, y las rechazadas conservan el motivo a la vista.
+  if (extractoActual) mostrarCuenta(extractoActual);
+  render();
+
+  const fallaron = resultados.filter((r) => !r.ok).length;
+  if (fallaron) {
+    alert(`${resultados.length - fallaron} factura/s emitidas y ${fallaron} rechazada/s. ` +
+          `El motivo de cada rechazo queda en su fila.`);
+  }
+}
+
+// ============================ Asistente ============================
+let pasoActual = 0;
+const ULTIMO_PASO = 4;
+
+function mostrarVista(necesitaOnboarding) {
+  document.getElementById("onboardingWizard").hidden = !necesitaOnboarding;
+  document.getElementById("mainApp").hidden = necesitaOnboarding;
+  document.getElementById("btnReconfigurar").hidden = necesitaOnboarding;
+}
+
+function irAPaso(n) {
+  document.querySelectorAll(".wizard-paso").forEach((el) => {
+    el.hidden = el.dataset.paso !== String(n);
+  });
+  document.querySelectorAll(".wizard-steps .dot").forEach((dot, i) => {
+    dot.classList.toggle("activo", i === n);
+    dot.classList.toggle("hecho", i < n);
+  });
+  pasoActual = n;
+  if (n === 3) actualizarResumen();
+}
+
+async function actualizarCertEstado() {
+  const estado = await window.pywebview.api.estado_certificado();
+  document.getElementById("certEstado").innerHTML = `
+    <span class="${estado.crt_existe ? "ok" : ""}">${estado.crt_existe ? "✓" : "○"} Certificado</span>
+    <span class="${estado.key_existe ? "ok" : ""}">${estado.key_existe ? "✓" : "○"} Clave privada</span>
+  `;
+  document.getElementById("btnPaso2Siguiente").disabled = !(estado.crt_existe && estado.key_existe);
+  return estado;
+}
+
+function actualizarResumen() {
+  document.getElementById("resumen").innerHTML = `
+    <div><span>CUIT</span><strong>${esc(document.getElementById("wCuit").value)}</strong></div>
+    <div><span>Punto de Venta</span><strong>${esc(document.getElementById("wPtoVta").value)}</strong></div>
+    <div><span>Certificado</span><strong>✓ instalado</strong></div>
+  `;
+}
+
+function iniciarWizard() {
+  document.querySelectorAll(".cert-modo").forEach((el) => (el.hidden = true));
+  document.querySelectorAll(".choice-card").forEach((el) => el.classList.remove("activo"));
+  document.getElementById("certGenerarInstrucciones").hidden = true;
+  document.getElementById("wizardError").hidden = true;
+  irAPaso(0);
+  actualizarCertEstado();
+}
+
+function configurarWizard() {
+  document.querySelectorAll("[data-next]").forEach((btn) => {
+    btn.addEventListener("click", () => irAPaso(Math.min(pasoActual + 1, ULTIMO_PASO)));
+  });
+  document.querySelectorAll("[data-back]").forEach((btn) => {
+    btn.addEventListener("click", () => irAPaso(Math.max(pasoActual - 1, 0)));
+  });
+
+  document.querySelectorAll(".choice-card").forEach((card) => {
+    card.addEventListener("click", () => {
+      const modo = card.dataset.modo;
+      document.querySelectorAll(".choice-card").forEach((c) => c.classList.toggle("activo", c === card));
+      document.getElementById("certGenerar").hidden = modo !== "generar";
+      document.getElementById("certExistente").hidden = modo !== "existente";
+    });
+  });
+
+  document.getElementById("btnGenerarCert").addEventListener("click", async () => {
+    const btn = document.getElementById("btnGenerarCert");
+    btn.disabled = true;
+    const resp = await window.pywebview.api.generar_certificado(
+      document.getElementById("wCuit").value,
+      document.getElementById("wAlias").value
+    );
+    btn.disabled = false;
+    if (!resp.ok) {
+      alert("No se pudo generar: " + resp.error);
+      return;
+    }
+    document.getElementById("certGenerarInstrucciones").hidden = false;
+    actualizarCertEstado();
+  });
+
+  [["btnElegirCrtGenerado", "crt"], ["btnElegirCrt", "crt"], ["btnElegirKey", "key"]].forEach(([id, tipo]) => {
+    document.getElementById(id).addEventListener("click", async () => {
+      const resp = await window.pywebview.api.elegir_archivo(tipo);
+      if (resp.ok) actualizarCertEstado();
+      else if (resp.error) alert(resp.error);
+    });
+  });
+
+  document.getElementById("btnGuardarConfig").addEventListener("click", async () => {
+    const btn = document.getElementById("btnGuardarConfig");
+    btn.disabled = true;
+    const resp = await window.pywebview.api.guardar_config_inicial({
+      cuit: document.getElementById("wCuit").value,
+      pto_vta: document.getElementById("wPtoVta").value,
+    });
+    btn.disabled = false;
+
+    const errorBox = document.getElementById("wizardError");
+    if (!resp.ok) {
+      errorBox.textContent = resp.error;
+      errorBox.hidden = false;
+      return;
+    }
+    errorBox.hidden = true;
+    irAPaso(ULTIMO_PASO);
+  });
+
+  document.getElementById("btnCerrarApp").addEventListener("click", () => window.pywebview.api.cerrar_app());
+
+  document.getElementById("btnReconfigurar").addEventListener("click", () => {
+    const confirmar = confirm("¿Reconfigurar la app con otros datos? Vas a tener que volver a elegir tu certificado.");
+    if (!confirmar) return;
+    mostrarVista(true);
+    iniciarWizard();
+  });
+}
+
+// ============================ Historial ============================
+function cambiarTab(nombre) {
+  document.querySelectorAll(".tab-btn").forEach((b) => b.classList.toggle("activo", b.dataset.tab === nombre));
+  document.getElementById("tabFacturar").hidden = nombre !== "facturar";
+  document.getElementById("tabHistorial").hidden = nombre !== "historial";
+  if (nombre === "historial") cargarHistorial();
+}
+
+async function cargarHistorial() {
+  const resumen = document.getElementById("historialResumen");
+  resumen.innerHTML = '<span class="spinner"></span> Cargando...';
+
+  const resp = await window.pywebview.api.listar_historial(document.getElementById("historialPeriodo").value);
+  if (resp.error) {
+    resumen.textContent = "";
+    alert("Error leyendo el historial: " + resp.error);
+    return;
+  }
+  renderHistorial(resp.registros, resp.total);
+}
+
+async function consultarDesdeArca() {
+  const btn = document.getElementById("btnConsultarArca");
+  const resumen = document.getElementById("historialResumen");
+
+  btn.disabled = true;
+  resumen.innerHTML = '<span class="spinner"></span> Consultando a ARCA (puede tardar unos segundos)...';
+  const resp = await window.pywebview.api.consultar_historial_arca(document.getElementById("historialPeriodo").value);
+  btn.disabled = false;
+
+  if (!resp.ok) {
+    resumen.textContent = "";
+    alert("Error consultando ARCA: " + resp.error);
+    return;
+  }
+  renderHistorial(resp.registros, resp.total, { origen: "arca" });
+}
+
+function renderHistorial(registros, total, opciones = {}) {
+  const origen = opciones.origen || "local";
+  const cont = document.getElementById("historialLista");
+  const resumen = document.getElementById("historialResumen");
+  cont.innerHTML = "";
+
+  if (!registros.length) {
+    resumen.textContent = "";
+    cont.innerHTML = `<div class="empty-state"><span class="emoji">🧾</span>No se registraron facturas en este período.</div>`;
+    return;
+  }
+
+  resumen.textContent = `${registros.length} factura${registros.length === 1 ? "" : "s"} — ${plata(total)}` +
+    (origen === "arca" ? " · 📡 en vivo desde ARCA" : "");
+
+  cont.innerHTML = registros.map((r) => {
+    const de = r.de || (origen === "arca" ? "Consumidor Final" : "—");
+    const concepto = r.concepto_texto || (origen === "arca" ? "—" : "Servicios");
+    const detalle = r.detalle ? `<small style="color:var(--plum-500)"> · ${esc(r.detalle)}</small>` : "";
+    return `
+      <div class="historial-item">
+        <span data-label="Fecha">${esc(formatearFecha(r.fecha_emision || r.fecha_transferencia))}</span>
+        <span data-label="Monto" class="col-monto">${esc(plata(r.monto))}</span>
+        <span data-label="De" class="col-de"><strong>${esc(de)}</strong>${detalle}</span>
+        <span data-label="Concepto">${esc(concepto)}</span>
+        <span data-label="CAE">${esc(r.cae)}</span>
+        <span data-label="Comprobante">PtoVta ${esc(r.pto_vta)} — Nº ${esc(r.numero)}</span>
+      </div>
+    `;
+  }).join("");
+}
+
+// ============================ Arranque ============================
+esperarApi().then(async () => {
+  opcionesArca = await window.pywebview.api.opciones_facturacion();
+
+  document.getElementById("btnElegirExtracto").addEventListener("click", elegirExtracto);
+  document.getElementById("btnFacturar").addEventListener("click", facturarSeleccionadas);
+  ["buscar", "montoMin", "montoMax"].forEach((id) =>
+    document.getElementById(id).addEventListener("input", render));
+  ["soloTransferencias", "ocultarFacturadas"].forEach((id) =>
+    document.getElementById(id).addEventListener("change", render));
+
+  document.querySelectorAll(".tab-btn").forEach((btn) => {
+    btn.addEventListener("click", () => cambiarTab(btn.dataset.tab));
+  });
+  document.getElementById("historialPeriodo").addEventListener("change", cargarHistorial);
+  document.getElementById("btnConsultarArca").addEventListener("click", consultarDesdeArca);
+
+  configurarDefaults();
+  configurarLista();
+  configurarWizard();
+
+  const estado = await window.pywebview.api.estado_onboarding();
+  mostrarVista(estado.necesita_onboarding);
+  if (estado.necesita_onboarding) iniciarWizard();
+});
+</script>
+</body>
+</html>

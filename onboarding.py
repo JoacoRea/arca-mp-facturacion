@@ -46,9 +46,14 @@ if not os.path.exists(CONFIG_PATH):
 import config  # noqa: E402 (tiene que ir después de garantizar que el archivo existe)
 
 
-def necesita_onboarding():
+def necesita_onboarding(requiere_mp=True):
+    """¿Falta completar la primera configuración?
+
+    `requiere_mp` es False en la variante de Banco Galicia: esa app no consulta
+    la API de Mercado Pago (los movimientos salen del Excel del Home Banking),
+    así que no tiene sentido exigir un Access Token para poder facturar."""
     campos_ok = all([
-        getattr(config, "MP_ACCESS_TOKEN", None),
+        getattr(config, "MP_ACCESS_TOKEN", None) if requiere_mp else True,
         getattr(config, "CUIT", None),
         getattr(config, "PTO_VTA", None),
     ])
@@ -121,7 +126,11 @@ def instalar_clave(origen_path):
     return KEY_PATH
 
 
-def guardar_config(mp_access_token, cuit, pto_vta):
+def guardar_config(cuit, pto_vta, mp_access_token=None, requiere_mp=True):
+    """Escribe config.py con los datos del usuario.
+
+    `requiere_mp` es False en la variante de Banco Galicia, que factura a partir
+    del Excel del Home Banking y no usa la API de Mercado Pago."""
     cuit_str = str(cuit).strip().replace("-", "")
     if not (cuit_str.isdigit() and len(cuit_str) == 11):
         raise ValueError("El CUIT debe tener 11 dígitos, sin guiones.")
@@ -129,16 +138,18 @@ def guardar_config(mp_access_token, cuit, pto_vta):
         pto_vta_int = int(pto_vta)
     except (TypeError, ValueError):
         raise ValueError("El punto de venta debe ser un número.")
-    if not mp_access_token or not mp_access_token.strip():
+    if requiere_mp and not (mp_access_token or "").strip():
         raise ValueError("Falta el Access Token de Mercado Pago.")
+
+    token = (mp_access_token or "").strip() or None
 
     contenido = f'''"""Datos propios de cada usuario de la app (completado por el asistente de configuración).
 
-Para reconfigurar, abrí Beauty Biller y usá el botón "Reconfigurar", o
-editá estos valores a mano.
+Para reconfigurar, abrí la app y usá el botón "Reconfigurar", o editá estos
+valores a mano.
 """
 
-MP_ACCESS_TOKEN = {mp_access_token.strip()!r}
+MP_ACCESS_TOKEN = {token!r}
 
 CUIT = {int(cuit_str)}
 

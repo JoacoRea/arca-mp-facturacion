@@ -11,19 +11,20 @@ import sys
 
 import rutas
 
-LOG_PATH = rutas.ruta_datos("beauty_biller.log")
-
 _configurado = False
 
 
-def configurar():
+def configurar(nombre="beauty_biller"):
+    """Arranca el logging a archivo. `nombre` permite que cada variante de la app
+    escriba su propio log (la de Mercado Pago y la de Banco Galicia pueden
+    convivir en la misma carpeta)."""
     global _configurado
     if _configurado:
         return
     _configurado = True
 
     handler = logging.handlers.RotatingFileHandler(
-        LOG_PATH, maxBytes=1_000_000, backupCount=2, encoding="utf-8"
+        rutas.ruta_datos(f"{nombre}.log"), maxBytes=1_000_000, backupCount=2, encoding="utf-8"
     )
     handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
 
