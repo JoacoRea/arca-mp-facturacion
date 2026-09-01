@@ -13,6 +13,7 @@ La UI vive en gui_galicia.html; acá solo está la lógica que se expone al JS.
 import datetime
 import logging
 import os
+import threading
 
 import webview
 
@@ -148,7 +149,13 @@ class Api:
             return {"ok": False, "error": str(e)}
 
     def cerrar_app(self):
-        webview.windows[0].destroy()
+        # Cerrar la ventana desde adentro de una llamada del puente JS cuelga la
+        # app: después de ejecutar este método, pywebview evalúa JavaScript en la
+        # ventana para devolverle el resultado a la página y se queda esperando la
+        # respuesta. Si la ventana ya se cerró, esa respuesta nunca llega y el
+        # hilo queda bloqueado para siempre. Por eso se contesta primero y se
+        # cierra un instante después, desde otro hilo.
+        threading.Timer(0.2, webview.windows[0].destroy).start()
 
     # --- Extracto de Galicia ---
     def opciones_facturacion(self):
