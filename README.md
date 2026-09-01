@@ -97,6 +97,9 @@ Detalles que vale saber:
 - Python 3.10+. En macOS, conviene el de python.org o Homebrew antes que el
   que viene de fábrica: el del sistema está compilado contra LibreSSL, que no
   entiende el ajuste de cifrados que necesitan los servidores viejos de ARCA.
+- En macOS conviene crear un entorno virtual (`python3 -m venv .venv` y
+  `source .venv/bin/activate`) antes de instalar: varias instalaciones de
+  Python rechazan `pip install` fuera de uno.
 - Clave Fiscal nivel 3 en ARCA, un certificado digital propio y un Punto de
   Venta habilitado como "Web Services".
 - Solo para la variante de Mercado Pago: una cuenta en Mercado Pago

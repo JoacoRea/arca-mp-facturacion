@@ -1,5 +1,12 @@
 pywebview>=6.2
 zeep>=4.3
 requests>=2.32
-cryptography>=43.0
 openpyxl>=3.1
+
+# cryptography dejó de publicar ruedas de macOS para Intel a partir de la 49:
+# desde ahí solo compila para Apple Silicon (arm64). En una Mac Intel, pip cae
+# al código fuente e intenta compilarlo con Rust, lo que exige tener instaladas
+# las herramientas de desarrollo de Xcode y tarda un rato largo. La 48.0.1 trae
+# rueda "universal2", que sirve para Intel y para Apple Silicon.
+cryptography>=43.0,<49; platform_system == "Darwin" and platform_machine == "x86_64"
+cryptography>=43.0; platform_system != "Darwin" or platform_machine != "x86_64"
