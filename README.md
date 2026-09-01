@@ -132,6 +132,36 @@ certificado), se abre un asistente de configuración que:
 
 También se puede armar `config.py` a mano copiando `config.example.py`.
 
+## Abrir la app sin la Terminal (macOS)
+
+Para que la persona que factura no tenga que pasar por la consola, hay un
+script que arma un lanzador de doble clic:
+
+```
+./crear_lanzador_mac.sh
+```
+
+Crea `Facturar.app` en la misma carpeta: se abre con doble clic y se puede
+arrastrar al Dock. Es un applet de AppleScript compilado con `osacompile` (que
+ya viene en macOS), no un empaquetado de PyInstaller — no hay nada que
+compilar ni que firmar, y como se crea en la propia computadora Gatekeeper no
+lo bloquea. Toma el ícono de `icon.ico`, reempaquetándolo como `.icns`.
+
+Lanza la app en segundo plano y a los pocos segundos verifica que siga viva: si
+falló al arrancar, muestra el motivo en un cartel en vez de no hacer nada. Lo
+que imprima la app queda en `facturacion_lanzador.log`.
+
+Si algo del applet no funcionara, la alternativa mínima es un archivo
+`Facturar.command` con estas cuatro líneas (`chmod +x` y doble clic), que hace
+lo mismo pero abre además una ventana de Terminal:
+
+```
+#!/bin/bash
+cd "$(dirname "$0")"
+source .venv/bin/activate
+python gui_galicia.py
+```
+
 ## Empaquetar como .exe
 
 Para no depender de tener Python instalado:
