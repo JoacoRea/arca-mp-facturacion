@@ -19,7 +19,16 @@ def _frozen():
 
 def _base_datos():
     if _frozen():
-        return os.path.dirname(sys.executable)
+        carpeta = os.path.dirname(sys.executable)
+        # En macOS, PyInstaller en modo ventana arma un paquete .app y el
+        # ejecutable queda enterrado en MiApp.app/Contents/MacOS/. Los datos del
+        # usuario no pueden vivir ahí adentro: desaparecen al reemplazar la app
+        # por una versión nueva, y macOS trata el paquete como una unidad que se
+        # mueve entera. Se usa la carpeta que contiene al .app, que es la que la
+        # persona ve y respalda.
+        if sys.platform == "darwin" and carpeta.endswith("/Contents/MacOS"):
+            return os.path.dirname(os.path.dirname(os.path.dirname(carpeta)))
+        return carpeta
     return os.path.dirname(os.path.abspath(__file__))
 
 

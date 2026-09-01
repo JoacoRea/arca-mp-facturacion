@@ -92,8 +92,11 @@ Detalles que vale saber:
 ## Requisitos
 
 - Windows 10/11 con WebView2 Runtime (viene instalado de fábrica en
-  versiones actualizadas de Windows).
-- Python 3.10+
+  versiones actualizadas de Windows), o macOS (usa el WebKit del sistema, no
+  hace falta instalar nada aparte).
+- Python 3.10+. En macOS, conviene el de python.org o Homebrew antes que el
+  que viene de fábrica: el del sistema está compilado contra LibreSSL, que no
+  entiende el ajuste de cifrados que necesitan los servidores viejos de ARCA.
 - Clave Fiscal nivel 3 en ARCA, un certificado digital propio y un Punto de
   Venta habilitado como "Web Services".
 - Solo para la variante de Mercado Pago: una cuenta en Mercado Pago
@@ -126,16 +129,27 @@ Para no depender de tener Python instalado:
 ```
 pip install pyinstaller
 
-# Variante Mercado Pago
+# Windows — el separador de --add-data es ";"
 pyinstaller --onefile --noconsole --name "BeautyBiller" --icon icon.ico --add-data "gui.html;." --add-data "icon.ico;." gui.py
-
-# Variante Banco Galicia
 pyinstaller --onefile --noconsole --name "FacturacionGalicia" --icon icon.ico --add-data "gui_galicia.html;." --add-data "icon.ico;." gui_galicia.py
+
+# macOS — el separador es ":" y el ícono va en formato .icns (o se omite)
+pyinstaller --onefile --windowed --name "FacturacionGalicia" --add-data "gui_galicia.html:." --add-data "icon.ico:." gui_galicia.py
 ```
 
-Genera un `.exe` en `dist/`, un solo archivo. Se le puede pasar esa carpeta (o
-solo el `.exe`, que arma `config.py` solo la primera vez) a cualquier otra
-persona sin que necesite instalar nada más.
+Genera el ejecutable en `dist/`. Se le puede pasar esa carpeta (o solo el
+ejecutable, que arma `config.py` solo la primera vez) a cualquier otra persona
+sin que necesite instalar nada más.
+
+En macOS hay dos cosas más a tener en cuenta:
+
+- El paquete `.app` no está firmado ni notarizado, así que Gatekeeper lo va a
+  bloquear la primera vez. Se abre con **clic derecho → Abrir → Abrir**, que
+  deja la excepción registrada; después arranca con doble clic como cualquier
+  otra app.
+- Los datos del usuario (`config.py`, certificado, historial) se guardan en la
+  carpeta que contiene al `.app`, no adentro suyo — ver `rutas.py`. Así
+  sobreviven a reemplazar la app por una versión nueva.
 
 ## Estructura
 

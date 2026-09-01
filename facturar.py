@@ -43,9 +43,20 @@ CONDICION_CONSUMIDOR_FINAL = 5
 
 class SSLAdapter(HTTPAdapter):
     """Adapter que baja el nivel de seguridad SSL para servidores viejos como los de ARCA."""
+
     def init_poolmanager(self, *args, **kwargs):
         ctx = ssl.create_default_context()
-        ctx.set_ciphers("DEFAULT:@SECLEVEL=1")
+        try:
+            ctx.set_ciphers("DEFAULT:@SECLEVEL=1")
+        except ssl.SSLError:
+            # "@SECLEVEL" es una extensión de OpenSSL. El Python que trae macOS
+            # de fábrica está compilado contra LibreSSL, que no la reconoce, y
+            # entonces descarta la cadena entera ("No cipher can be selected")
+            # en vez de ignorar el token: sin este try, la app se caía en la
+            # primera conexión con ARCA. Se sigue con los cifrados por defecto;
+            # si ARCA rechaza el handshake, la salida es instalar Python de
+            # python.org o Homebrew, que vienen con OpenSSL.
+            ctx = ssl.create_default_context()
         kwargs["ssl_context"] = ctx
         return super().init_poolmanager(*args, **kwargs)
 
