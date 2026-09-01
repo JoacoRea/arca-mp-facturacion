@@ -94,6 +94,13 @@ Detalles que vale saber:
 - Windows 10/11 con WebView2 Runtime (viene instalado de fábrica en
   versiones actualizadas de Windows), o macOS (usa el WebKit del sistema, no
   hace falta instalar nada aparte).
+- **En macOS anterior a 11.3** (Catalina, y Big Sur hasta la 11.2) hay que
+  instalar `pywebview==5.3.2` a mano después de las dependencias. Desde la 5.4,
+  pywebview llama a `shouldPerformDownload()` al decidir cada navegación, un
+  método que no existe en esas versiones de macOS: la llamada falla, el permiso
+  de navegación nunca se responde y **la ventana queda completamente en blanco**,
+  sin más pista que un aviso de PyObjC en la consola. La app funciona con las dos
+  generaciones de pywebview (ver `DIALOGO_ABRIR` en `gui_galicia.py`).
 - Python 3.10+. En macOS, conviene el de python.org o Homebrew antes que el
   que viene de fábrica: el del sistema está compilado contra LibreSSL, que no
   entiende el ajuste de cifrados que necesitan los servidores viejos de ARCA.

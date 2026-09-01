@@ -1,4 +1,9 @@
-pywebview>=6.2
+# pywebview 5.4 en adelante no sirve en macOS anterior a 11.3 (Catalina, Big Sur
+# hasta la 11.2): al decidir cada navegación llama a shouldPerformDownload(), que
+# no existe en esas versiones, y la ventana queda en blanco. En esas Mac hay que
+# instalar "pywebview==5.3.2" a mano; el mínimo está puesto en 5.3.2 para que esa
+# instalación no se pise al reinstalar las dependencias.
+pywebview>=5.3.2
 zeep>=4.3
 requests>=2.32
 openpyxl>=3.1

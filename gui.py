@@ -22,6 +22,16 @@ log = logging.getLogger("beauty_biller")
 HTML_PATH = rutas.ruta_recurso("gui.html")
 ICON_PATH = rutas.ruta_recurso("icon.ico")
 
+# pywebview 6 expone las constantes de diálogo como enum (webview.FileDialog.OPEN);
+# hasta la 5.3.2 eran constantes sueltas (webview.OPEN_DIALOG). Se aceptan las dos
+# porque en macOS 10.15 (Catalina) y 11.0-11.2 hay que quedarse en la 5.3.2: desde
+# la 5.4, pywebview llama a shouldPerformDownload() al decidir cada navegación, y
+# ese método existe recién en macOS 11.3. En un Mac más viejo la llamada falla, el
+# permiso de navegación nunca se responde y la ventana queda completamente en
+# blanco, sin ningún error visible más que un aviso de PyObjC.
+_dialogo = getattr(webview, "FileDialog", None)
+DIALOGO_ABRIR = _dialogo.OPEN if _dialogo is not None else getattr(webview, "OPEN_DIALOG", 10)
+
 TIPOS_ARCHIVO = {
     "crt": ("Certificado (*.crt;*.pem)",),
     "key": ("Clave privada (*.key;*.pem)",),
@@ -72,7 +82,7 @@ class Api:
 
     def elegir_archivo(self, tipo):
         file_types = TIPOS_ARCHIVO.get(tipo, ())
-        seleccion = webview.windows[0].create_file_dialog(webview.FileDialog.OPEN, file_types=file_types)
+        seleccion = webview.windows[0].create_file_dialog(DIALOGO_ABRIR, file_types=file_types)
         if not seleccion:
             return {"ok": False}
 
