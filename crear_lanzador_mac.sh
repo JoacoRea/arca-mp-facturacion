@@ -45,14 +45,15 @@ fi
 rm -rf "$destino"
 guion="$(mktemp -t lanzador)".applescript
 
-cat > "$guion" <<APPLESCRIPT
-set carpeta to "$carpeta"
-set piton to "$piton"
+# El AppleScript no lleva ninguna ruta grabada: la resuelve en el momento a
+# partir de dónde esté el propio applet. Esto importa — la primera versión sí
+# tenía la ruta fija, y el día que se movió la carpeta el lanzador dejó de
+# encontrarla y solo mostraba un error. Mientras Facturar.app viaje adentro de
+# la carpeta del proyecto, se la puede mover o renombrar y sigue funcionando.
+cat > "$guion" <<'APPLESCRIPT'
+set carpeta to do shell script "dirname " & quoted form of (POSIX path of (path to me))
 
--- Se lanza en segundo plano y a los pocos segundos se chequea que siga viva.
--- Si arrancó bien, este applet termina y deja la ventana abierta; si se cayó al
--- arrancar, se muestra el motivo en pantalla en vez de no pasar nada.
-set orden to "cd " & quoted form of carpeta & " && nohup " & quoted form of piton & " gui_galicia.py > facturacion_lanzador.log 2>&1 & sleep 4; kill -0 \$! 2>/dev/null || { cat facturacion_lanzador.log >&2; exit 1; }"
+set orden to "cd " & quoted form of carpeta & " && P=.venv/bin/python; [ -x \"$P\" ] || P=$(command -v python3); nohup \"$P\" gui_galicia.py > facturacion_lanzador.log 2>&1 & sleep 4; kill -0 $! 2>/dev/null || { cat facturacion_lanzador.log >&2; exit 1; }"
 
 try
     do shell script orden
@@ -72,3 +73,4 @@ fi
 echo
 echo "Listo: $destino"
 echo "Abrilo con doble clic, o arrastralo al Dock para que quede a mano."
+echo "Si movés la carpeta, llevate Facturar.app adentro y sigue funcionando."

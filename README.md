@@ -151,6 +151,18 @@ Lanza la app en segundo plano y a los pocos segundos verifica que siga viva: si
 falló al arrancar, muestra el motivo en un cartel en vez de no hacer nada. Lo
 que imprima la app queda en `facturacion_lanzador.log`.
 
+El applet **no lleva la ruta grabada**: la resuelve en cada arranque a partir de
+dónde está él mismo (`path to me`). Mientras `Facturar.app` viaje adentro de la
+carpeta del proyecto, se la puede mover o renombrar y el lanzador sigue
+funcionando. Lo que no hay que hacer es copiar el `.app` solo a otro lado
+(a `/Applications`, por ejemplo): ahí va a buscar la app al lado suyo y no la
+va a encontrar.
+
+**Dónde conviene que viva la carpeta:** no en `Descargas`. Ahí adentro están el
+certificado, la clave privada y el historial de facturación, y esa carpeta es
+la que la gente vacía cuando limpia espacio. Mejor `Documentos`, y con una
+copia de respaldo cada tanto.
+
 Si algo del applet no funcionara, la alternativa mínima es un archivo
 `Facturar.command` con estas cuatro líneas (`chmod +x` y doble clic), que hace
 lo mismo pero abre además una ventana de Terminal:
