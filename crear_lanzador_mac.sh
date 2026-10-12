@@ -20,6 +20,11 @@ fi
 
 # El ícono: se reempaqueta icon.ico como .icns. Las dos cosas guardan las
 # imágenes como PNG adentro, así que alcanza con cambiar el envoltorio.
+#
+# Solo se usan los tipos ic07/ic08/ic09 (128, 256 y 512 px). Los tipos chicos
+# icp4/icp5 (16 y 32 px) no sirven: en macOS Catalina su contenido se lee como
+# píxeles crudos aunque sea PNG, y el ícono chico (lista del Finder, carteles)
+# aparece como ruido de colores. Sin esos bloques, macOS achica el grande.
 if [ ! -f "$carpeta/icon.icns" ] && [ -f "$carpeta/icon.ico" ]; then
     "$piton" - "$carpeta" <<'PYTHON' || echo "Aviso: no se pudo armar el ícono, el lanzador va a usar el genérico"
 import pathlib, struct, sys
@@ -27,7 +32,7 @@ import pathlib, struct, sys
 carpeta = pathlib.Path(sys.argv[1])
 datos = (carpeta / "icon.ico").read_bytes()
 PNG = b"\x89PNG\r\n\x1a\n"
-TIPOS = {16: b"icp4", 32: b"icp5", 64: b"icp6", 128: b"ic07", 256: b"ic08", 512: b"ic09"}
+TIPOS = {128: b"ic07", 256: b"ic08", 512: b"ic09"}
 
 bloques = b""
 for i in range(struct.unpack("<H", datos[4:6])[0]):
