@@ -45,6 +45,12 @@ fi
 rm -rf "$destino"
 guion="$(mktemp -t lanzador)".applescript
 
+# A los 4 segundos se fija si la app sigue abierta. Si ya no está, mira con qué
+# código terminó: 0 quiere decir que la cerraron a mano (pasa si alguien la abre
+# y la cierra enseguida) y no se avisa nada; cualquier otro código es una caída
+# al arrancar, y se muestra el motivo. La primera versión solo miraba si seguía
+# abierta, y a veces mostraba un cartel de error al cerrarla rápido.
+#
 # El AppleScript no lleva ninguna ruta grabada: la resuelve en el momento a
 # partir de dónde esté el propio applet. Esto importa — la primera versión sí
 # tenía la ruta fija, y el día que se movió la carpeta el lanzador dejó de
@@ -53,11 +59,12 @@ guion="$(mktemp -t lanzador)".applescript
 cat > "$guion" <<'APPLESCRIPT'
 set carpeta to do shell script "dirname " & quoted form of (POSIX path of (path to me))
 
-set orden to "cd " & quoted form of carpeta & " && P=.venv/bin/python; [ -x \"$P\" ] || P=$(command -v python3); nohup \"$P\" gui_galicia.py > facturacion_lanzador.log 2>&1 & sleep 4; kill -0 $! 2>/dev/null || { cat facturacion_lanzador.log >&2; exit 1; }"
+set orden to "cd " & quoted form of carpeta & " && P=.venv/bin/python; [ -x \"$P\" ] || P=$(command -v python3); nohup \"$P\" gui_galicia.py > facturacion_lanzador.log 2>&1 & pid=$!; sleep 4; kill -0 $pid 2>/dev/null && exit 0; wait $pid; s=$?; [ $s -eq 0 ] && exit 0; echo \"La app se cerro con codigo $s.\" >&2; cat facturacion_lanzador.log >&2; exit 1"
 
 try
     do shell script orden
 on error mensaje
+    activate
     display dialog "No se pudo abrir la app de facturacion." & return & return & mensaje buttons {"Cerrar"} default button 1 with icon stop
 end try
 APPLESCRIPT
