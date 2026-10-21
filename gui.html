@@ -346,7 +346,7 @@
 
   .historial-header, .historial-item {
     display: grid;
-    grid-template-columns: 100px 90px 1fr 170px 140px;
+    grid-template-columns: 100px 90px 1fr 170px 140px 64px;
     align-items: center;
     gap: 10px;
     padding: 13px 20px;
@@ -527,6 +527,50 @@
     margin-bottom: 14px;
     max-width: 460px;
   }
+  /* ---------- Comprobante en PDF ---------- */
+  .btn-pdf {
+    border: 1.5px solid var(--blush-200);
+    background: #fff;
+    color: var(--rose-600);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .btn-pdf:hover:not(:disabled) { background: var(--tint-strong); }
+  .btn-pdf:disabled { opacity: .55; cursor: default; }
+  .btn-pdf:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+  .modal-fondo {
+    position: fixed;
+    inset: 0;
+    background: rgba(17, 24, 32, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 50;
+  }
+  .modal {
+    width: 100%;
+    max-width: 520px;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    padding: 24px 26px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .modal h2 { margin: 0; font-size: 19px; font-weight: 600; color: var(--plum-900); }
+  .modal .modal-texto { margin: 0; font-size: 13px; line-height: 1.5; color: var(--plum-500); }
+  .modal .field input, .modal .field select { width: 100%; }
+  .modal .fila-campos { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .modal .acciones { display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }
+  .modal .wizard-error { margin: 0; max-width: none; }
 </style>
 </head>
 <body>
@@ -709,17 +753,63 @@
             </select>
           </div>
           <button id="btnConsultarArca" class="btn btn-ghost">🔄 Consultar desde ARCA</button>
+          <button id="btnDatosComprobante" class="btn btn-ghost">🧾 Datos del comprobante</button>
           <span id="historialResumen" class="status"></span>
+          <span id="comprobanteEstado" class="status"></span>
         </section>
 
         <section class="card lista-wrap">
           <div class="historial-header">
-            <span>Fecha</span><span>Monto</span><span>De</span><span>CAE</span><span>Comprobante</span>
+            <span>Fecha</span><span>Monto</span><span>De</span><span>CAE</span><span>Comprobante</span><span></span>
           </div>
           <div id="historialLista"></div>
         </section>
       </div>
     </div>
+  </div>
+
+  <div id="modalEmisor" class="modal-fondo" hidden>
+    <section class="card modal" role="dialog" aria-modal="true" aria-labelledby="modalEmisorTitulo">
+      <h2 id="modalEmisorTitulo">Datos para el comprobante</h2>
+      <p class="modal-texto">Se cargan una sola vez. Tienen que figurar en la factura, pero ARCA no los recibe por Web Service, así que la app los guarda en esta compu.</p>
+      <div class="field">
+        <label for="eNombre">Nombre o razón social</label>
+        <input id="eNombre" type="text" maxlength="120" autocomplete="name">
+      </div>
+      <div class="field">
+        <label for="eDomicilio">Domicilio comercial</label>
+        <input id="eDomicilio" type="text" maxlength="160" autocomplete="street-address">
+      </div>
+      <div class="fila-campos">
+        <div class="field">
+          <label for="eIibb">Ingresos Brutos</label>
+          <input id="eIibb" type="text" maxlength="40" placeholder="Número o Exento">
+        </div>
+        <div class="field">
+          <label for="eInicio">Inicio de actividades</label>
+          <input id="eInicio" type="text" maxlength="10" placeholder="dd/mm/aaaa">
+        </div>
+      </div>
+      <div class="field">
+        <label for="eDescripcion">Qué se factura</label>
+        <input id="eDescripcion" type="text" maxlength="120" placeholder="ej: Servicios de estética">
+      </div>
+      <div class="field">
+        <label for="eCondicion">Condición de venta</label>
+        <select id="eCondicion">
+          <option>Transferencia bancaria</option>
+          <option>Contado</option>
+          <option>Tarjeta de débito</option>
+          <option>Tarjeta de crédito</option>
+          <option>Otra</option>
+        </select>
+      </div>
+      <p id="modalEmisorError" class="wizard-error" hidden></p>
+      <div class="acciones">
+        <button id="btnEmisorCancelar" class="btn btn-ghost" type="button">Cancelar</button>
+        <button id="btnEmisorGuardar" class="btn btn-primary" type="button">Guardar</button>
+      </div>
+    </section>
   </div>
 
 <script>
@@ -1078,6 +1168,7 @@ function renderHistorial(registros, total, opciones = {}) {
       <span data-label="De" class="col-de">${esc(de)}</span>
       <span data-label="CAE">${esc(r.cae)}</span>
       <span data-label="Comprobante">PtoVta ${esc(r.pto_vta)} — Nº ${esc(r.numero)}</span>
+      ${celdaPdf(r, origen)}
     `;
     cont.appendChild(div);
   });
@@ -1107,6 +1198,101 @@ async function aplicarTema() {
   document.getElementById("initEmoji").textContent = "🦋";
 }
 
+// --- Comprobante en PDF ---
+// ARCA autoriza la factura pero no genera el documento: la app lo arma con los
+// datos del historial más los del emisor, que se piden la primera vez.
+let despuesDeGuardarEmisor = null;
+
+function celdaPdf(r, origen) {
+  const id = r.id || r.mp_id;
+  if (origen === "arca" || !r.cae || id == null) return "<span></span>";
+  return `<span><button type="button" class="btn-pdf" data-id="${esc(id)}" title="Descargar el comprobante en PDF">PDF</button></span>`;
+}
+
+async function abrirModalEmisor(despues) {
+  const resp = await window.pywebview.api.datos_emisor();
+  if (!resp.ok) {
+    alert("No se pudieron leer los datos del comprobante:\n\n" + resp.error);
+    return;
+  }
+  const d = resp.datos;
+  document.getElementById("eNombre").value = d.nombre || "";
+  document.getElementById("eDomicilio").value = d.domicilio || "";
+  document.getElementById("eIibb").value = d.iibb || "";
+  document.getElementById("eInicio").value = d.inicio_actividades ? formatearFecha(d.inicio_actividades) : "";
+  document.getElementById("eDescripcion").value = d.descripcion || "";
+  const select = document.getElementById("eCondicion");
+  const condicion = d.condicion_venta || "Transferencia bancaria";
+  if (![...select.options].some((o) => o.value === condicion)) select.add(new Option(condicion, condicion));
+  select.value = condicion;
+
+  despuesDeGuardarEmisor = despues || null;
+  document.getElementById("modalEmisorError").hidden = true;
+  document.getElementById("modalEmisor").hidden = false;
+  document.getElementById("eNombre").focus();
+}
+
+function cerrarModalEmisor() {
+  document.getElementById("modalEmisor").hidden = true;
+  despuesDeGuardarEmisor = null;
+}
+
+async function guardarDatosEmisor() {
+  const btn = document.getElementById("btnEmisorGuardar");
+  const error = document.getElementById("modalEmisorError");
+  btn.disabled = true;
+  const resp = await window.pywebview.api.guardar_datos_emisor({
+    nombre: document.getElementById("eNombre").value,
+    domicilio: document.getElementById("eDomicilio").value,
+    iibb: document.getElementById("eIibb").value,
+    inicio_actividades: document.getElementById("eInicio").value,
+    descripcion: document.getElementById("eDescripcion").value,
+    condicion_venta: document.getElementById("eCondicion").value,
+  });
+  btn.disabled = false;
+  if (!resp.ok) {
+    error.textContent = resp.error;
+    error.hidden = false;
+    return;
+  }
+  const despues = despuesDeGuardarEmisor;
+  cerrarModalEmisor();
+  document.getElementById("comprobanteEstado").textContent = "✓ Datos del comprobante guardados";
+  if (despues) despues();
+}
+
+async function descargarComprobante(boton) {
+  const estado = document.getElementById("comprobanteEstado");
+  boton.disabled = true;
+  boton.textContent = "…";
+  const resp = await window.pywebview.api.descargar_comprobante(boton.dataset.id);
+  boton.disabled = false;
+  boton.textContent = "PDF";
+
+  if (resp.faltan_datos_emisor) {
+    abrirModalEmisor(() => descargarComprobante(boton));
+    return;
+  }
+  if (!resp.ok) {
+    alert("No se pudo generar el comprobante:\n\n" + resp.error);
+    return;
+  }
+  estado.textContent = `📄 Guardado en la carpeta "comprobantes": ${resp.archivo}`;
+}
+
+function configurarComprobante() {
+  document.getElementById("historialLista").addEventListener("click", (evento) => {
+    const boton = evento.target.closest(".btn-pdf");
+    if (boton && !boton.disabled) descargarComprobante(boton);
+  });
+  document.getElementById("btnDatosComprobante").addEventListener("click", () => abrirModalEmisor());
+  document.getElementById("btnEmisorCancelar").addEventListener("click", cerrarModalEmisor);
+  document.getElementById("btnEmisorGuardar").addEventListener("click", guardarDatosEmisor);
+  document.getElementById("modalEmisor").addEventListener("keydown", (evento) => {
+    if (evento.key === "Escape") cerrarModalEmisor();
+  });
+}
+
 esperarApi().then(async () => {
   await aplicarTema();
 
@@ -1120,6 +1306,7 @@ esperarApi().then(async () => {
   });
   document.getElementById("historialPeriodo").addEventListener("change", cargarHistorial);
   document.getElementById("btnConsultarArca").addEventListener("click", consultarDesdeArca);
+  configurarComprobante();
 
   configurarWizard();
 

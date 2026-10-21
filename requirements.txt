@@ -7,6 +7,9 @@ pywebview>=5.3.2
 zeep>=4.3
 requests>=2.32
 openpyxl>=3.1
+# Para el código QR del comprobante en PDF. Es Python puro: no trae nada
+# compilado que pueda fallar al instalar en una Mac vieja.
+qrcode>=7.4
 
 # cryptography dejó de publicar ruedas de macOS para Intel a partir de la 49:
 # desde ahí solo compila para Apple Silicon (arm64). En una Mac Intel, pip cae

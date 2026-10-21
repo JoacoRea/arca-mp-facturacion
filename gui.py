@@ -6,6 +6,7 @@ gui.html; este archivo solo expone la lógica de Python al JS vía js_api.
 """
 import datetime
 import logging
+import os
 import threading
 import webview
 
@@ -14,6 +15,7 @@ import registro
 import onboarding  # tiene que importarse primero: garantiza que config.py exista
 
 import consultar_transferencias as mp
+import comprobante
 import facturar
 import historial
 
@@ -51,6 +53,11 @@ DIAS_POR_PERIODO = {
 # otro usuario la app usa la estética sobria por defecto. Solo cambia lo
 # visual — la lógica de facturación es exactamente la misma.
 CUIT_TEMA_BEAUTY_BILLER = 27470709478
+
+# Valores con los que arranca el formulario de datos del comprobante en PDF.
+# La descripción queda vacía a propósito: depende de qué servicio dé cada
+# persona, así que se pide la primera vez que se descarga un comprobante.
+COMPROBANTE_POR_DEFECTO = {"condicion_venta": "Transferencia bancaria"}
 
 
 def _tema_bb_activo():
@@ -209,6 +216,48 @@ class Api:
         total = round(sum(r.get("monto") or 0 for r in registros), 2)
         log.info("Consulta de historial a ARCA: periodo=%s, encontradas=%s", periodo, len(registros))
         return {"ok": True, "registros": registros, "total": total}
+
+
+    # --- Comprobante en PDF ---
+    def datos_emisor(self):
+        """Datos del emisor para el comprobante (con los valores por defecto de esta app)."""
+        try:
+            return {"ok": True, "datos": comprobante.cargar_datos_emisor(COMPROBANTE_POR_DEFECTO)}
+        except Exception as e:
+            log.exception("Error leyendo los datos del emisor")
+            return {"ok": False, "error": str(e)}
+
+    def guardar_datos_emisor(self, datos):
+        try:
+            comprobante.guardar_datos_emisor(datos or {})
+        except ValueError as e:
+            return {"ok": False, "error": str(e)}
+        except Exception as e:
+            log.exception("Error guardando los datos del emisor")
+            return {"ok": False, "error": str(e)}
+        log.info("Datos del emisor para el comprobante guardados")
+        return {"ok": True}
+
+    def descargar_comprobante(self, id_registro):
+        """Genera el PDF de una factura del historial y lo abre con el visor de la compu."""
+        try:
+            ruta = comprobante.exportar(id_registro, por_defecto=COMPROBANTE_POR_DEFECTO)
+        except comprobante.FaltanDatosEmisor:
+            return {"ok": False, "faltan_datos_emisor": True}
+        except ValueError as e:
+            return {"ok": False, "error": str(e)}
+        except Exception as e:
+            log.exception("Error generando el comprobante de %s", id_registro)
+            return {"ok": False, "error": str(e)}
+
+        # Si no se puede abrir solo (no hay visor de PDF configurado), el archivo
+        # igual quedó guardado: no es motivo para avisar un error.
+        try:
+            comprobante.abrir(ruta)
+        except Exception:
+            log.warning("No se pudo abrir el comprobante automáticamente: %s", ruta, exc_info=True)
+        log.info("Comprobante generado: %s", os.path.basename(ruta))
+        return {"ok": True, "ruta": ruta, "archivo": os.path.basename(ruta)}
 
 
 if __name__ == "__main__":
