@@ -1,0 +1,100 @@
+# Arma los .exe de Windows en una máquina Windows de GitHub, para no depender
+# de tener una a mano. Cada .exe trae Python y todas las dependencias adentro:
+# en la compu de la persona no hay que instalar nada.
+#
+# Después de armarlo, lo abre y verifica que la app arranque de verdad: espera
+# 30 segundos y revisa el log. Si el empaquetado dejó algo afuera, falla acá y
+# no el día de la instalación.
+#
+# Los .exe quedan para bajar en la pestaña Actions de GitHub, en la corrida
+# correspondiente, sección "Artifacts".
+name: Armar .exe de Windows
+
+on:
+  push:
+    branches: [claude/leandro-galicia-billing-app-01rupo]
+    paths:
+      - "*.py"
+      - "*.html"
+      - "icon.ico"
+      - "requirements.txt"
+      - ".github/workflows/build-windows.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  exe:
+    name: ${{ matrix.nombre }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - nombre: FacturacionARCA       # Mercado Pago
+            script: gui.py
+            html: gui.html
+            log: beauty_biller.log
+          - nombre: FacturacionGalicia    # Excel del Home Banking de Galicia
+            script: gui_galicia.py
+            html: gui_galicia.html
+            log: facturacion_galicia.log
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller
+
+      - name: Armar el .exe
+        run: >
+          pyinstaller --noconfirm --onefile --windowed
+          --name ${{ matrix.nombre }}
+          --icon icon.ico
+          --add-data "${{ matrix.html }};."
+          --add-data "icon.ico;."
+          ${{ matrix.script }}
+
+      - name: Probar que arranca
+        shell: pwsh
+        run: |
+          $exe = "${{ matrix.nombre }}.exe"
+          $carpeta = Join-Path $env:RUNNER_TEMP "prueba-${{ matrix.nombre }}"
+          New-Item -ItemType Directory -Force -Path $carpeta | Out-Null
+          Copy-Item "dist/$exe" $carpeta
+
+          $proceso = Start-Process -FilePath (Join-Path $carpeta $exe) -WorkingDirectory $carpeta -PassThru
+          Start-Sleep -Seconds 30
+
+          $log = Join-Path $carpeta "${{ matrix.log }}"
+          $contenido = if (Test-Path $log) { Get-Content $log -Raw } else { "" }
+          Write-Host "----- log de la app -----"
+          Write-Host $contenido
+          Write-Host "-------------------------"
+          Write-Host ("Archivos que creó al arrancar: " + ((Get-ChildItem $carpeta).Name -join ", "))
+
+          $vivo = -not $proceso.HasExited
+          # El .exe de un solo archivo arranca un proceso hijo: se cierra el árbol entero.
+          if ($vivo) { taskkill /PID $proceso.Id /T /F | Out-Null }
+
+          if (-not $vivo) { Write-Error "La app se cerró sola antes de los 30 segundos."; exit 1 }
+          if ($contenido -notmatch "App iniciada") { Write-Error "La app no llegó a arrancar: el log no dice 'App iniciada'."; exit 1 }
+          if ($contenido -match "Error no manejado") { Write-Error "La app registró un error al arrancar."; exit 1 }
+          Write-Host "Arrancó y siguió abierta 30 segundos sin errores."
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.nombre }}
+          path: dist/${{ matrix.nombre }}.exe
+          retention-days: 90
