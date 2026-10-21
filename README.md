@@ -60,16 +60,16 @@ inicial de la pantalla (`PERFIL`, arriba de todo en `gui_galicia.py`):
 | Tipo de comprobante | Factura C | `CbteTipo = 11` |
 | Condición de IVA del receptor | Consumidor Final | `DocTipo 99` / `DocNro 0` / `CondicionIVAReceptorId 5` |
 | Tipo | Servicio | `Concepto = 2` |
-| Producto / servicio | Asesoría | solo al historial local |
-| Condición de venta | Transferencia bancaria | solo al historial local |
+| Producto / servicio | Asesoría | no viaja: va en el PDF del comprobante |
+| Condición de venta | Transferencia bancaria | no viaja: va en el PDF del comprobante |
 | Fechas "desde" y "hasta" del servicio | Día de facturación | `FchServDesde = FchServHasta = CbteFch` |
 
-Las dos filas que dicen "solo al historial local" son campos que WSFEv1
-**no tiene**: la descripción del producto/servicio y la condición de venta
-existen en "Comprobantes en Línea" (el formulario web de ARCA), no en el Web
-Service. La app los guarda en `historial_facturas.json` para que el registro
-propio quede completo, pero no aparecen en el comprobante que emite ARCA.
-Para cambiar cualquiera de estos valores por defecto, se edita `PERFIL`.
+Las dos filas que "no viajan" son campos que WSFEv1 **no tiene**: la
+descripción del producto/servicio y la condición de venta existen en
+"Comprobantes en Línea" (el formulario web de ARCA), no en el Web Service. La
+app los guarda en `historial_facturas.json` y los pone en el comprobante en
+PDF (ver más abajo). Para cambiar cualquiera de estos valores por defecto, se
+edita `PERFIL`.
 
 Cada movimiento del extracto recibe un ID propio y estable (fecha + importe +
 texto del movimiento), así que se puede volver a importar el mismo mes —o un
@@ -86,8 +86,31 @@ Detalles que vale saber:
 - El DNI se deduce del CUIL de las personas físicas (27-13242063-2 → DNI
   13242063).
 - La Factura C emitida por Web Service no lleva descripción de los ítems, así
-  que el "detalle" que se escribe en pantalla (por defecto, "Asesoría") es
-  solo para el historial propio: a ARCA no viaja.
+  que el "detalle" que se escribe en pantalla (por defecto, "Asesoría") no
+  viaja a ARCA: queda en el historial y en el PDF del comprobante.
+
+## Comprobante en PDF (las dos variantes)
+
+ARCA autoriza la factura por Web Service y devuelve el CAE, pero **no genera el
+documento**, y desde ARCA tampoco se lo puede bajar después: "Mis
+Comprobantes" muestra los datos, no una factura. El documento lo tiene que
+armar quien factura. La app lo hace: en la pestaña de historial, cada factura
+tiene un botón **PDF** que arma el comprobante, lo guarda en la carpeta
+`comprobantes/` y lo abre.
+
+La validez no depende de que lo genere ARCA. Viene de que tenga los datos que
+exige la RG 1415, el CAE que ARCA ya otorgó y el código QR de la RG 4892, con
+el que cualquiera puede verificar el comprobante contra ARCA.
+
+- La primera vez pide los datos del emisor que el comprobante tiene que mostrar
+  y que ARCA no devuelve: nombre o razón social, domicilio comercial, Ingresos
+  Brutos, fecha de inicio de actividades, qué se factura y condición de venta.
+  Se guardan en `datos_emisor.json` y se editan desde "Datos del comprobante".
+- Sirve también para facturas viejas: el historial guarda todo lo necesario.
+- Las facturas traídas en vivo con "Consultar desde ARCA" no tienen botón: de
+  esas no se conoce la descripción ni el receptor.
+- El PDF se escribe sin librerías de PDF (todas dependen de Pillow, que trae
+  código compilado); el QR sale de `qrcode`, que es Python puro.
 
 ## Requisitos
 
@@ -176,7 +199,30 @@ python gui_galicia.py
 
 ## Empaquetar como .exe
 
-Para no depender de tener Python instalado:
+### Windows: lo arma GitHub
+
+Cada vez que se suben cambios a esta rama, GitHub Actions arma en una máquina
+Windows suya los dos ejecutables, `FacturacionARCA.exe` (Mercado Pago) y
+`FacturacionGalicia.exe`, y verifica que arranquen: abre cada uno, espera 30
+segundos y revisa el log (`.github/workflows/build-windows.yml`). Se bajan desde
+la pestaña **Actions** del repositorio → la última corrida de "Armar .exe de
+Windows" → sección **Artifacts**. Quedan disponibles 90 días; para volver a
+generarlos alcanza con "Run workflow" en esa misma pantalla.
+
+Al instalarlo en la compu de alguien:
+
+- **Ponerlo en una carpeta propia**, por ejemplo `C:\Users\<usuario>\Facturacion`,
+  nunca en Descargas. El certificado, la clave privada y el historial se
+  guardan al lado del `.exe`.
+- **Windows lo va a frenar la primera vez** ("Windows protegió su PC"), porque
+  no está firmado. Se abre con **Más información → Ejecutar de todas formas**;
+  después ya no pregunta.
+- Conviene crear un acceso directo en el Escritorio: clic derecho sobre el
+  `.exe` → Enviar a → Escritorio.
+
+### A mano
+
+Para armarlo en una computadora propia:
 
 ```
 pip install pyinstaller
@@ -216,6 +262,9 @@ Compartido por las dos variantes:
 - `historial.py` — registro local de qué movimientos ya se facturaron.
 - `rutas.py` — resolución de rutas de archivos, compatible tanto con correr
   desde código fuente como empaquetado en un `.exe`.
+- `comprobante.py` — arma el comprobante en PDF de una factura del historial,
+  con el código QR de ARCA.
+- `.github/workflows/build-windows.yml` — arma y prueba los `.exe` de Windows.
 - `registro.py` — logging a archivo para poder diagnosticar problemas sin
   acceso directo a la pantalla del usuario.
 
