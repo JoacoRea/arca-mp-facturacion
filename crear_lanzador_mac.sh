@@ -18,19 +18,22 @@ else
     echo "Aviso: no se encontró el entorno virtual .venv, se usa $piton"
 fi
 
-# El ícono: se reempaqueta icon.ico como .icns. Las dos cosas guardan las
+# El ícono: se reempaqueta el .ico de la app como .icns (icono_facturacion.ico;
+# si no está, el icon.ico viejo). Las dos cosas guardan las
 # imágenes como PNG adentro, así que alcanza con cambiar el envoltorio.
 #
 # Solo se usan los tipos ic07/ic08/ic09 (128, 256 y 512 px). Los tipos chicos
 # icp4/icp5 (16 y 32 px) no sirven: en macOS Catalina su contenido se lee como
 # píxeles crudos aunque sea PNG, y el ícono chico (lista del Finder, carteles)
 # aparece como ruido de colores. Sin esos bloques, macOS achica el grande.
-if [ ! -f "$carpeta/icon.icns" ] && [ -f "$carpeta/icon.ico" ]; then
-    "$piton" - "$carpeta" <<'PYTHON' || echo "Aviso: no se pudo armar el ícono, el lanzador va a usar el genérico"
+ico="$carpeta/icono_facturacion.ico"
+[ -f "$ico" ] || ico="$carpeta/icon.ico"
+icns="${ico%.ico}.icns"
+if [ ! -f "$icns" ] && [ -f "$ico" ]; then
+    "$piton" - "$ico" "$icns" <<'PYTHON' || echo "Aviso: no se pudo armar el ícono, el lanzador va a usar el genérico"
 import pathlib, struct, sys
 
-carpeta = pathlib.Path(sys.argv[1])
-datos = (carpeta / "icon.ico").read_bytes()
+datos = pathlib.Path(sys.argv[1]).read_bytes()
 PNG = b"\x89PNG\r\n\x1a\n"
 TIPOS = {128: b"ic07", 256: b"ic08", 512: b"ic09"}
 
@@ -43,7 +46,7 @@ for i in range(struct.unpack("<H", datos[4:6])[0]):
         bloques += TIPOS[ancho] + struct.pack(">I", len(imagen) + 8) + imagen
 
 if bloques:
-    (carpeta / "icon.icns").write_bytes(b"icns" + struct.pack(">I", len(bloques) + 8) + bloques)
+    pathlib.Path(sys.argv[2]).write_bytes(b"icns" + struct.pack(">I", len(bloques) + 8) + bloques)
 PYTHON
 fi
 
@@ -77,8 +80,8 @@ APPLESCRIPT
 osacompile -o "$destino" "$guion"
 rm -f "$guion"
 
-if [ -f "$carpeta/icon.icns" ]; then
-    cp "$carpeta/icon.icns" "$destino/Contents/Resources/applet.icns"
+if [ -f "$icns" ]; then
+    cp "$icns" "$destino/Contents/Resources/applet.icns"
     touch "$destino"
 fi
 

@@ -30,7 +30,9 @@ registro.configurar("facturacion_galicia")
 log = logging.getLogger("facturacion_galicia")
 
 HTML_PATH = rutas.ruta_recurso("gui_galicia.html")
-ICON_PATH = rutas.ruta_recurso("icon.ico")
+# Ícono propio de la app (comprobante con tilde, en la paleta de la interfaz).
+# icon.ico es el logo de Beauty Biller y queda solo para esa marca.
+ICON_PATH = rutas.ruta_recurso("icono_facturacion.ico")
 
 # pywebview 6 expone las constantes de diálogo como enum (webview.FileDialog.OPEN);
 # hasta la 5.3.2 eran constantes sueltas (webview.OPEN_DIALOG). Se aceptan las dos

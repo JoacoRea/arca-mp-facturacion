@@ -176,7 +176,7 @@ Crea `Facturar.app` en la misma carpeta: se abre con doble clic y se puede
 arrastrar al Dock. Es un applet de AppleScript compilado con `osacompile` (que
 ya viene en macOS), no un empaquetado de PyInstaller — no hay nada que
 compilar ni que firmar, y como se crea en la propia computadora Gatekeeper no
-lo bloquea. Toma el ícono de `icon.ico`, reempaquetándolo como `.icns`.
+lo bloquea. Toma el ícono de `icono_facturacion.ico`, reempaquetándolo como `.icns`.
 
 Lanza la app en segundo plano y a los pocos segundos verifica que siga viva: si
 falló al arrancar, muestra el motivo en un cartel en vez de no hacer nada. Lo
@@ -236,11 +236,11 @@ Para armarlo en una computadora propia:
 pip install pyinstaller
 
 # Windows — el separador de --add-data es ";"
-pyinstaller --onefile --noconsole --name "BeautyBiller" --icon icon.ico --add-data "gui.html;." --add-data "icon.ico;." gui.py
-pyinstaller --onefile --noconsole --name "FacturacionGalicia" --icon icon.ico --add-data "gui_galicia.html;." --add-data "icon.ico;." gui_galicia.py
+pyinstaller --onefile --noconsole --name "FacturacionARCA" --icon icono_facturacion.ico --add-data "gui.html;." --add-data "icono_facturacion.ico;." gui.py
+pyinstaller --onefile --noconsole --name "FacturacionGalicia" --icon icono_facturacion.ico --add-data "gui_galicia.html;." --add-data "icono_facturacion.ico;." gui_galicia.py
 
 # macOS — el separador es ":" y el ícono va en formato .icns (o se omite)
-pyinstaller --onefile --windowed --name "FacturacionGalicia" --add-data "gui_galicia.html:." --add-data "icon.ico:." gui_galicia.py
+pyinstaller --onefile --windowed --name "FacturacionGalicia" --add-data "gui_galicia.html:." --add-data "icono_facturacion.ico:." gui_galicia.py
 ```
 
 Genera el ejecutable en `dist/`. Se le puede pasar esa carpeta (o solo el
@@ -273,6 +273,9 @@ Compartido por las dos variantes:
 - `comprobante.py` — arma el comprobante en PDF de una factura del historial,
   con el código QR de ARCA.
 - `.github/workflows/build-windows.yml` — arma y prueba los `.exe` de Windows.
+- `icono_facturacion.ico` — ícono de las dos apps (comprobante con tilde, en la
+  paleta de la interfaz). `icon.ico` es el logo de Beauty Biller y no se usa en
+  esta rama.
 - `registro.py` — logging a archivo para poder diagnosticar problemas sin
   acceso directo a la pantalla del usuario.
 

@@ -16,7 +16,7 @@ on:
     paths:
       - "*.py"
       - "*.html"
-      - "icon.ico"
+      - "*.ico"
       - "requirements.txt"
       - ".github/workflows/build-windows.yml"
   workflow_dispatch:
@@ -61,9 +61,9 @@ jobs:
         run: >
           pyinstaller --noconfirm --onefile --windowed
           --name ${{ matrix.nombre }}
-          --icon icon.ico
+          --icon icono_facturacion.ico
           --add-data "${{ matrix.html }};."
-          --add-data "icon.ico;."
+          --add-data "icono_facturacion.ico;."
           ${{ matrix.script }}
 
       - name: Probar que arranca
