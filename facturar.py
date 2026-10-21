@@ -85,6 +85,67 @@ def _errores_arca(resultado):
     return []
 
 
+# Cuántos días para atrás acepta ARCA la fecha de un comprobante, según el
+# concepto. Pasado ese margen, rechaza la factura.
+DIAS_ATRAS_PERMITIDOS = {
+    CONCEPTO_PRODUCTOS: 5,
+    CONCEPTO_SERVICIOS: 10,
+    CONCEPTO_PRODUCTOS_Y_SERVICIOS: 10,
+}
+
+
+def hoy_ar():
+    return datetime.datetime.now(login.ZONA_AR).date()
+
+
+def fecha_valida(deseada, concepto=CONCEPTO_SERVICIOS, ultima_emitida=None, hoy=None):
+    """La fecha más cercana a `deseada` que ARCA acepta para un comprobante nuevo.
+
+    ARCA pone dos límites: la fecha no puede tener más de N días de antigüedad
+    (DIAS_ATRAS_PERMITIDOS) y no puede ser anterior a la del último comprobante
+    ya autorizado en el punto de venta. Devuelve (fecha, motivo): `motivo` es
+    None si se pudo usar la fecha pedida, o explica por qué hubo que correrla.
+    """
+    hoy = hoy or hoy_ar()
+    dias = DIAS_ATRAS_PERMITIDOS[concepto]
+    minima = hoy - datetime.timedelta(days=dias)
+    motivo = f"ARCA no acepta facturas con más de {dias} días de antigüedad"
+    if ultima_emitida and ultima_emitida > minima:
+        minima = ultima_emitida
+        motivo = ("ARCA no acepta una fecha anterior a la de la última factura emitida "
+                  f"({ultima_emitida.strftime('%d/%m/%Y')})")
+    if deseada < minima:
+        return minima, motivo
+    if deseada > hoy:
+        return hoy, "ARCA no acepta facturas con fecha futura"
+    return deseada, None
+
+
+def fecha_ultimo_comprobante():
+    """Fecha del último comprobante autorizado en el punto de venta, o None si
+    todavía no hay ninguno. Se usa para no pedir una factura con fecha anterior,
+    que ARCA rechazaría."""
+    creds = login.obtener_credenciales_validas()
+    auth = {"Token": creds["token"], "Sign": creds["sign"], "Cuit": CUIT}
+    client = cliente_wsfe()
+
+    ultimo = client.service.FECompUltimoAutorizado(Auth=auth, PtoVta=PTO_VTA, CbteTipo=CBTE_TIPO)
+    errores = _errores_arca(ultimo)
+    if errores:
+        raise RuntimeError("ARCA devolvió un error: " + "; ".join(errores))
+    if not ultimo.CbteNro:
+        return None
+
+    resultado = client.service.FECompConsultar(
+        Auth=auth,
+        FeCompConsReq={"CbteTipo": CBTE_TIPO, "CbteNro": ultimo.CbteNro, "PtoVta": PTO_VTA},
+    )
+    detalle = resultado.ResultGet
+    if detalle is None or not detalle.CbteFch:
+        return None
+    return datetime.datetime.strptime(detalle.CbteFch, "%Y%m%d").date()
+
+
 def emitir_factura_c(importe, fecha=None, concepto=CONCEPTO_SERVICIOS,
                      doc_tipo=DOC_CONSUMIDOR_FINAL, doc_nro=0,
                      condicion_iva_receptor=CONDICION_CONSUMIDOR_FINAL,

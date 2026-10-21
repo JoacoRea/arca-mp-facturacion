@@ -59,6 +59,17 @@ def obtener_transferencias(dias=30):
     return resultados
 
 
+def fecha_argentina(fecha_hora):
+    """Día del cobro en hora argentina. Mercado Pago informa las fechas con su
+    propio huso (-04:00): cortar los primeros 10 caracteres daría el día
+    anterior para un cobro hecho después de las 23:00 en Argentina, y la
+    factura saldría con esa fecha."""
+    try:
+        return datetime.datetime.fromisoformat(fecha_hora).astimezone(ZONA_AR).date().isoformat()
+    except (TypeError, ValueError):
+        return str(fecha_hora)[:10]
+
+
 def filtrar_candidatos(pagos):
     """Se queda solo con los movimientos que parecen transferencias recibidas reales."""
     candidatos = []
@@ -77,7 +88,7 @@ def filtrar_candidatos(pagos):
 
             candidatos.append({
                 "id": p["id"],
-                "fecha": p["date_created"][:10],
+                "fecha": fecha_argentina(p["date_created"]),
                 "monto": p["transaction_amount"],
                 "de": nombre,
                 "metodo": metodo,

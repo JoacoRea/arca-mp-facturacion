@@ -27,6 +27,14 @@ movimientos: la persona baja el Excel del Home Banking y la app lo lee.
 4. Por cada transferencia elegida, emite la Factura C correspondiente en ARCA
    (WSFEv1) y guarda un historial local para no facturar dos veces lo mismo.
 
+Cada factura sale **con la fecha del cobro** (en hora argentina: Mercado Pago
+informa las horas en -04:00), así que se puede facturar, por ejemplo, una vez
+por semana. ARCA pone dos límites a esa fecha: no más de 10 días de antigüedad
+para servicios, y nunca anterior a la de la última factura del punto de venta.
+Por eso se factura de la transferencia más vieja a la más nueva, y si la fecha
+de un cobro no se puede usar, sale con la fecha válida más cercana y el
+resultado lo avisa.
+
 También tiene una pestaña de historial de facturación (con filtro por
 período) que puede reconstruirse en vivo consultando directamente a ARCA,
 además de leer el registro local.

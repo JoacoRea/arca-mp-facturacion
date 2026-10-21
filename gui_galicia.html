@@ -1143,6 +1143,15 @@ async function facturarSeleccionadas() {
   if (extractoActual) mostrarCuenta(extractoActual);
   render();
 
+  // Si ARCA no aceptaba la fecha del movimiento, la factura salió con otra.
+  const avisos = resultados.filter((r) => r.ok && r.aviso);
+  if (avisos.length) {
+    alert("Algunas facturas salieron con otra fecha:\n\n" + avisos.map((r) => {
+      const m = movimientos.find((x) => x.id === r.id);
+      return `• ${m ? m.de : r.id}: ${r.aviso}`;
+    }).join("\n"));
+  }
+
   const fallaron = resultados.filter((r) => !r.ok).length;
   if (fallaron) {
     alert(`${resultados.length - fallaron} factura/s emitidas y ${fallaron} rechazada/s. ` +

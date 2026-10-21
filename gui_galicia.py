@@ -88,11 +88,7 @@ UMBRAL_IDENTIFICACION_CF = 417_288
 
 # Cuántos días para atrás acepta ARCA que se fecha un comprobante, según el
 # concepto. Se usa para avisar antes de emitir, no para bloquear.
-TOLERANCIA_FECHA = {
-    facturar.CONCEPTO_PRODUCTOS: 5,
-    facturar.CONCEPTO_SERVICIOS: 10,
-    facturar.CONCEPTO_PRODUCTOS_Y_SERVICIOS: 10,
-}
+TOLERANCIA_FECHA = facturar.DIAS_ATRAS_PERMITIDOS
 
 
 def _fecha_movimiento(movimiento):
@@ -224,7 +220,7 @@ class Api:
         }
 
     # --- Facturación ---
-    def _preparar(self, movimiento, item):
+    def _preparar(self, movimiento, item, ultima_emitida=None):
         """Traduce lo elegido en pantalla para ese movimiento a los parámetros de
         WSFEv1. Levanta ValueError con un mensaje mostrable si la combinación no
         se puede facturar."""
@@ -257,9 +253,14 @@ class Api:
         else:
             raise ValueError(f"Receptor inválido: {receptor}")
 
-        fecha_emision = _fecha_movimiento(movimiento) if item.get("fecha_modo") == "movimiento" else None
+        # Con "Fecha del movimiento", ARCA pone límites (antigüedad máxima y no
+        # antes de la última factura): si no se puede usar, se toma la fecha
+        # válida más cercana y se devuelve el motivo para avisarlo.
+        fecha_emision, motivo = None, None
+        if item.get("fecha_modo") == "movimiento":
+            fecha_emision, motivo = facturar.fecha_valida(_fecha_movimiento(movimiento), concepto, ultima_emitida)
 
-        return {
+        parametros = {
             "importe": movimiento["monto"],
             "fecha": fecha_emision,
             "concepto": concepto,
@@ -270,6 +271,7 @@ class Api:
             # día en que se factura, no el día en que entró la transferencia.
             "fecha_servicio": None,
         }
+        return parametros, motivo
 
     def facturar(self, items):
         """Emite una Factura C por cada movimiento elegido, con las opciones que
@@ -282,9 +284,25 @@ class Api:
             log.exception("Error leyendo el historial antes de facturar")
             return [{"id": (item or {}).get("id"), "ok": False, "error": [str(e)]} for item in items]
 
+        # ARCA no acepta una factura con fecha anterior a la última emitida: se
+        # factura del movimiento más viejo al más nuevo. Antes iba en el orden de
+        # la pantalla (el más nuevo primero), y con "Fecha del movimiento" ARCA
+        # rechazaba todos menos el primero.
+        items = sorted(
+            (item or {} for item in items),
+            key=lambda item: (self._movimientos.get(str(item.get("id"))) or {}).get("fecha", ""),
+        )
+        ultima_emitida = None
+        if any(item.get("fecha_modo") == "movimiento" for item in items):
+            try:
+                ultima_emitida = facturar.fecha_ultimo_comprobante()
+            except Exception as e:
+                log.exception("Error consultando a ARCA la fecha del último comprobante")
+                return [{"id": item.get("id"), "ok": False, "error": [str(e)]} for item in items]
+
         resultados = []
         for item in items:
-            id_ = str((item or {}).get("id"))
+            id_ = str(item.get("id"))
             movimiento = self._movimientos.get(id_)
             if not movimiento:
                 continue
@@ -293,7 +311,7 @@ class Api:
                 continue
 
             try:
-                parametros = self._preparar(movimiento, item)
+                parametros, motivo = self._preparar(movimiento, item, ultima_emitida)
             except ValueError as e:
                 resultados.append({"id": id_, "ok": False, "error": [str(e)]})
                 continue
@@ -321,6 +339,9 @@ class Api:
                 })
                 movimiento["ya_facturada"] = True
                 movimiento["cae_previo"] = resultado.get("cae")
+                ultima_emitida = parametros["fecha"] or facturar.hoy_ar()
+                if motivo:
+                    resultado["aviso"] = f"Con fecha {parametros['fecha'].strftime('%d/%m')}: {motivo}."
                 log.info(
                     "Factura emitida: monto=%s concepto=%s cae=%s numero=%s",
                     movimiento["monto"], resultado.get("concepto_texto"),

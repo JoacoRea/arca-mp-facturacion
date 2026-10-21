@@ -154,7 +154,18 @@ class Api:
         return {"ok": True, "candidatos": candidatos}
 
     def facturar(self, ids):
+        """Emite una Factura C por cada transferencia elegida, con la fecha del cobro.
+
+        ARCA no acepta un comprobante con fecha anterior al último autorizado,
+        así que se factura de la transferencia más vieja a la más nueva. Si la
+        fecha de un cobro no se puede usar (más de 10 días de antigüedad, o
+        anterior a una factura ya emitida), se usa la más cercana que ARCA
+        acepta y se avisa en el resultado."""
         por_id = {str(c["id"]): c for c in self._candidatos}
+        elegidas = sorted(
+            (por_id[str(id_)] for id_ in ids if str(id_) in por_id),
+            key=lambda c: c["fecha"],
+        )
 
         # Se carga el historial una sola vez (ya_facturada() relee el JSON del
         # disco en cada llamada) y, si está dañado, no se factura nada.
@@ -164,22 +175,34 @@ class Api:
             log.exception("Error leyendo el historial antes de facturar")
             return [{"id": id_, "ok": False, "error": str(e)} for id_ in ids]
 
+        try:
+            ultima_emitida = facturar.fecha_ultimo_comprobante()
+        except Exception as e:
+            log.exception("Error consultando a ARCA la fecha del último comprobante")
+            return [{"id": id_, "ok": False, "error": [str(e)]} for id_ in ids]
+
         resultados = []
-        for id_ in ids:
-            c = por_id.get(str(id_))
-            if not c:
-                continue
-            if str(c["id"]) in hist:
+        for c in elegidas:
+            id_ = c["id"]
+            if str(id_) in hist:
                 resultados.append({"id": id_, "ok": False, "error": ["Ya estaba facturada"]})
                 continue
+
+            fecha_cobro = datetime.date.fromisoformat(c["fecha"])
+            fecha, motivo = facturar.fecha_valida(fecha_cobro, facturar.CONCEPTO_SERVICIOS, ultima_emitida)
             try:
-                resultado = facturar.emitir_factura_c(importe=c["monto"])
+                resultado = facturar.emitir_factura_c(importe=c["monto"], fecha=fecha)
             except Exception as e:
                 log.exception("Error emitiendo factura para transferencia %s", id_)
                 resultado = {"ok": False, "error": str(e)}
+
             if resultado.get("ok"):
+                ultima_emitida = fecha
                 historial.registrar_factura(c["id"], c, resultado)
-                log.info("Factura emitida: monto=%s cae=%s numero=%s", c["monto"], resultado.get("cae"), resultado.get("numero"))
+                if motivo:
+                    resultado["aviso"] = f"Con fecha {fecha.strftime('%d/%m')}: {motivo}."
+                log.info("Factura emitida: monto=%s fecha=%s cae=%s numero=%s",
+                         c["monto"], fecha.isoformat(), resultado.get("cae"), resultado.get("numero"))
             else:
                 log.warning("Factura rechazada para transferencia %s: %s", id_, resultado.get("error"))
             resultado["id"] = id_

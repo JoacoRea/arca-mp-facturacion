@@ -293,6 +293,17 @@
   .badge-ok { color: var(--green-600); background: rgba(47, 143, 91, 0.12); }
   .badge-error { color: var(--red-600); background: rgba(192, 57, 43, 0.12); }
   .badge-pending { color: var(--rose-600); background: var(--tint-primary); }
+  /* Aviso de fecha corrida: texto largo, así que baja a su propia línea y corta. */
+  .badge-aviso {
+    display: block;
+    width: auto;
+    margin-top: 5px;
+    white-space: normal;
+    line-height: 1.35;
+    border-radius: 10px;
+    color: #8a5a10;
+    background: rgba(183, 121, 31, 0.12);
+  }
 
   .empty-state, .init-state {
     padding: 48px 24px;
@@ -940,7 +951,9 @@ async function facturarSeleccionadas() {
     if (!chk) continue;
     const celda = chk.closest(".item").querySelector(".col-resultado");
     if (r.ok) {
-      celda.innerHTML = `<span class="badge badge-ok">✓ OK — CAE ${esc(r.cae)}</span>`;
+      // Si ARCA no aceptaba la fecha del cobro, la factura salió con otra: se avisa.
+      const aviso = r.aviso ? `<span class="badge badge-aviso">${esc(r.aviso)}</span>` : "";
+      celda.innerHTML = `<span class="badge badge-ok">✓ OK — CAE ${esc(r.cae)}</span>${aviso}`;
     } else {
       celda.innerHTML = `<span class="badge badge-error">✕ Rechazada: ${esc(r.error)}</span>`;
     }
