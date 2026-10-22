@@ -46,9 +46,9 @@ jobs:
             log: facturacion_galicia.log
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
@@ -93,7 +93,7 @@ jobs:
           if ($contenido -match "Error no manejado") { Write-Error "La app registró un error al arrancar."; exit 1 }
           Write-Host "Arrancó y siguió abierta 30 segundos sin errores."
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: ${{ matrix.nombre }}
           path: dist/${{ matrix.nombre }}.exe
