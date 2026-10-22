@@ -43,6 +43,37 @@ def ruta_datos(*partes):
     return os.path.join(_base_datos(), *partes)
 
 
+def carpeta_descargas():
+    """Carpeta de Descargas del usuario, para abrir ahí los selectores de archivo:
+    el certificado de ARCA y el extracto del banco siempre bajan ahí.
+
+    En Windows se consulta la ubicación real (la persona puede haberla movido a
+    otro disco, ej. "D:\\Descargas"); si no se puede, ~/Downloads. Devuelve ""
+    si no existe, y el diálogo abre donde quiera el sistema."""
+    if sys.platform == "win32":
+        try:
+            import ctypes
+            import uuid
+            from ctypes import wintypes
+
+            class _GUID(ctypes.Structure):
+                _fields_ = [("Data1", wintypes.DWORD), ("Data2", wintypes.WORD),
+                            ("Data3", wintypes.WORD), ("Data4", ctypes.c_ubyte * 8)]
+
+            bytes_le = uuid.UUID("374DE290-123F-4565-9164-39C4925E467B").bytes_le  # FOLDERID_Downloads
+            guid = _GUID.from_buffer_copy(bytes_le)
+            ruta = ctypes.c_wchar_p()
+            if ctypes.windll.shell32.SHGetKnownFolderPath(ctypes.byref(guid), 0, None, ctypes.byref(ruta)) == 0:
+                carpeta = ruta.value
+                ctypes.windll.ole32.CoTaskMemFree(ruta)
+                if carpeta and os.path.isdir(carpeta):
+                    return carpeta
+        except Exception:
+            pass
+    carpeta = os.path.join(os.path.expanduser("~"), "Downloads")
+    return carpeta if os.path.isdir(carpeta) else ""
+
+
 def ruta_recurso(*partes):
     """Ruta a un recurso empaquetado (HTML, ícono)."""
     return os.path.join(_base_recursos(), *partes)

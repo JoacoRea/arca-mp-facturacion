@@ -8,6 +8,7 @@ nada. Con config.py garantizado (aunque esté vacío), el resto de la app no
 se rompe al arrancar sin estar configurada; el wizard de gui.html se encarga
 de completarlo.
 """
+import json
 import os
 import shutil
 
@@ -22,11 +23,15 @@ CONFIG_PATH = rutas.ruta_datos("config.py")
 CERT_PATH = rutas.ruta_datos("certificado.crt")
 KEY_PATH = rutas.ruta_datos("MiClavePrivada.key")
 CSR_PATH = rutas.ruta_datos("certificado.csr")
+# Lo que se va cargando en el asistente, para no perderlo si la app se cierra a
+# mitad de camino (entre generar el CSR y bajar el certificado de ARCA pasan
+# minutos, y la persona puede cerrar la ventana). No tiene secretos.
+BORRADOR_PATH = rutas.ruta_datos("asistente_borrador.json")
 
 _TEMPLATE_VACIO = '''"""Datos propios de cada usuario de la app.
 
-Todavía no se completó la primera configuración. Abrí Beauty Biller
-(python gui.py) y seguí el asistente, o completá estos valores a mano.
+Todavía no se completó la primera configuración. Abrí la app y seguí el
+asistente, o completá estos valores a mano.
 """
 
 MP_ACCESS_TOKEN = None
@@ -112,6 +117,27 @@ def generar_clave_y_csr(cuit, alias):
         f.write(csr.public_bytes(serialization.Encoding.PEM))
 
     return {"key_path": KEY_PATH, "csr_path": CSR_PATH}
+
+
+def cargar_borrador():
+    """CUIT, punto de venta y alias cargados en un intento anterior del asistente.
+    Si no hay borrador, se usan los de config.py (caso "Reconfigurar")."""
+    try:
+        with open(BORRADOR_PATH, encoding="utf-8") as f:
+            datos = json.load(f)
+    except (OSError, ValueError):
+        datos = {}
+    return {
+        "cuit": str(datos.get("cuit") or getattr(config, "CUIT", None) or ""),
+        "pto_vta": str(datos.get("pto_vta") or getattr(config, "PTO_VTA", None) or ""),
+        "alias": str(datos.get("alias") or ""),
+    }
+
+
+def guardar_borrador(cuit, pto_vta, alias):
+    with open(BORRADOR_PATH, "w", encoding="utf-8") as f:
+        json.dump({"cuit": str(cuit or "").strip(), "pto_vta": str(pto_vta or "").strip(),
+                   "alias": str(alias or "").strip()}, f, ensure_ascii=False, indent=2)
 
 
 def instalar_certificado(origen_path):

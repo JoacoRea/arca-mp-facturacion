@@ -20,7 +20,7 @@ import facturar
 import historial
 
 registro.configurar("facturacion_arca")
-log = logging.getLogger("beauty_biller")
+log = logging.getLogger("facturacion_arca")
 
 HTML_PATH = rutas.ruta_recurso("gui.html")
 # Ícono propio de la app (comprobante con tilde, en la paleta de la interfaz).
@@ -81,6 +81,17 @@ class Api:
     def estado_certificado(self):
         return onboarding.estado_certificado()
 
+    def borrador_onboarding(self):
+        return onboarding.cargar_borrador()
+
+    def guardar_borrador(self, datos):
+        try:
+            onboarding.guardar_borrador(datos.get("cuit"), datos.get("pto_vta"), datos.get("alias"))
+            return {"ok": True}
+        except Exception as e:
+            log.exception("Error guardando el borrador del asistente")
+            return {"ok": False, "error": str(e)}
+
     def generar_certificado(self, cuit, alias):
         try:
             resultado = onboarding.generar_clave_y_csr(cuit, alias)
@@ -92,7 +103,9 @@ class Api:
 
     def elegir_archivo(self, tipo):
         file_types = TIPOS_ARCHIVO.get(tipo, ())
-        seleccion = webview.windows[0].create_file_dialog(DIALOGO_ABRIR, file_types=file_types)
+        seleccion = webview.windows[0].create_file_dialog(
+            DIALOGO_ABRIR, directory=rutas.carpeta_descargas(), file_types=file_types
+        )
         if not seleccion:
             return {"ok": False}
 

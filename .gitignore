@@ -8,6 +8,7 @@ MiClavePrivada.key
 credenciales.json
 historial_facturas.json
 datos_emisor.json
+asistente_borrador.json
 comprobantes/
 
 # Archivos temporales que generaban versiones viejas de login.py (hoy la firma es en memoria)

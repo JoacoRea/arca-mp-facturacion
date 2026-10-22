@@ -33,6 +33,6 @@ def configurar(nombre="beauty_biller"):
     raiz.addHandler(handler)
 
     def _excepcion_no_manejada(tipo, valor, tb):
-        logging.getLogger("beauty_biller").critical("Error no manejado", exc_info=(tipo, valor, tb))
+        logging.getLogger("app").critical("Error no manejado", exc_info=(tipo, valor, tb))
 
     sys.excepthook = _excepcion_no_manejada

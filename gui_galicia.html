@@ -501,6 +501,7 @@
               <li>Entrá a ARCA con tu Clave Fiscal → Administración de Certificados Digitales.</li>
               <li>Subí el archivo <code>certificado.csr</code> (está en esta misma carpeta).</li>
               <li>Descargá el certificado que te generen.</li>
+              <li>En <strong>Administrador de Relaciones de Clave Fiscal</strong> → Nueva relación → ARCA → WebServices → <strong>Facturación Electrónica</strong>, y elegí tu certificado como Computador Fiscal.</li>
               <li>Elegilo con el botón de abajo.</li>
             </ol>
             <button id="btnElegirCrtGenerado" class="btn btn-accent">Elegir certificado descargado (.crt)</button>
@@ -1170,6 +1171,7 @@ function mostrarVista(necesitaOnboarding) {
 }
 
 function irAPaso(n) {
+  if (pasoActual === 1 && n > 1) guardarBorrador();
   document.querySelectorAll(".wizard-paso").forEach((el) => {
     el.hidden = el.dataset.paso !== String(n);
   });
@@ -1188,7 +1190,43 @@ async function actualizarCertEstado() {
     <span class="${estado.key_existe ? "ok" : ""}">${estado.key_existe ? "✓" : "○"} Clave privada</span>
   `;
   document.getElementById("btnPaso2Siguiente").disabled = !(estado.crt_existe && estado.key_existe);
+  retomarCertificado(estado);
   return estado;
+}
+
+// El asistente guarda CUIT, punto de venta y alias apenas se pasa del paso 1:
+// entre generar el CSR y bajar el certificado de ARCA pasan minutos, y si la
+// app se cierra en el medio no hay que cargar todo de nuevo.
+async function cargarBorrador() {
+  try {
+    const b = await window.pywebview.api.borrador_onboarding();
+    [["wCuit", b.cuit], ["wPtoVta", b.pto_vta], ["wAlias", b.alias]].forEach(([id, valor]) => {
+      const campo = document.getElementById(id);
+      if (valor && !campo.value) campo.value = valor;
+    });
+  } catch (e) {}
+}
+
+function guardarBorrador() {
+  try {
+    window.pywebview.api.guardar_borrador({
+      cuit: document.getElementById("wCuit").value,
+      pto_vta: document.getElementById("wPtoVta").value,
+      alias: document.getElementById("wAlias").value,
+    }).catch(() => {});
+  } catch (e) {}
+}
+
+// Si ya se generó la clave y el CSR en un intento anterior pero falta el .crt,
+// se retoma desde "elegí el certificado descargado": generar de nuevo fallaría
+// porque la clave ya existe.
+function retomarCertificado(estado) {
+  if (!(estado.key_existe && estado.csr_existe && !estado.crt_existe)) return;
+  document.querySelectorAll(".choice-card").forEach((c) => c.classList.toggle("activo", c.dataset.modo === "generar"));
+  document.getElementById("certGenerar").hidden = false;
+  document.getElementById("certExistente").hidden = true;
+  document.getElementById("certGenerarInstrucciones").hidden = false;
+  document.getElementById("btnGenerarCert").hidden = true;
 }
 
 function actualizarResumen() {
@@ -1204,7 +1242,9 @@ function iniciarWizard() {
   document.querySelectorAll(".choice-card").forEach((el) => el.classList.remove("activo"));
   document.getElementById("certGenerarInstrucciones").hidden = true;
   document.getElementById("wizardError").hidden = true;
+  document.getElementById("btnGenerarCert").hidden = false;
   irAPaso(0);
+  cargarBorrador();
   actualizarCertEstado();
 }
 
