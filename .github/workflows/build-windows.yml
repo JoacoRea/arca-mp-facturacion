@@ -39,7 +39,7 @@ jobs:
           - nombre: FacturacionARCA       # Mercado Pago
             script: gui.py
             html: gui.html
-            log: beauty_biller.log
+            log: facturacion_arca.log
           - nombre: FacturacionGalicia    # Excel del Home Banking de Galicia
             script: gui_galicia.py
             html: gui_galicia.html

@@ -19,7 +19,7 @@ import comprobante
 import facturar
 import historial
 
-registro.configurar()
+registro.configurar("facturacion_arca")
 log = logging.getLogger("beauty_biller")
 
 HTML_PATH = rutas.ruta_recurso("gui.html")
